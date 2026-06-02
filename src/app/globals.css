@@ -1,0 +1,131 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --primary: #0d1b4b;
+    --secondary: #1f3a93;
+    --accent: #c9a84c;
+  }
+  * {
+    @apply border-line;
+  }
+  body {
+    @apply bg-white text-ink font-sans antialiased;
+    line-height: 1.55;
+  }
+  h1, h2, h3, h4 {
+    @apply font-display tracking-tight;
+    line-height: 1.1;
+  }
+  .ar {
+    @apply font-arabic;
+    direction: rtl;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 text-[15px] font-bold transition-all duration-200 whitespace-nowrap;
+  }
+  .btn-sm {
+    @apply rounded-lg px-4 py-2 text-[13px];
+  }
+  .btn-gold {
+    @apply bg-gold text-navy hover:-translate-y-0.5 hover:shadow-[0_12px_28px_rgba(201,168,76,0.35)];
+  }
+  .btn-navy {
+    @apply bg-navy text-white hover:bg-royal hover:-translate-y-0.5;
+  }
+  .btn-ghost {
+    @apply border border-white/40 text-white hover:bg-white/10 hover:border-white;
+  }
+  .btn-outline {
+    @apply bg-white text-navy border border-line hover:border-royal hover:text-royal;
+  }
+  .eyebrow {
+    @apply inline-flex items-center gap-2 text-[13px] font-bold uppercase tracking-[0.12em] text-royal;
+  }
+  .pill {
+    @apply inline-flex self-start rounded-md bg-surface-2 px-2.5 py-1 text-[11.5px] font-bold text-royal;
+  }
+  .card-base {
+    @apply flex flex-col overflow-hidden rounded-2xl border border-line bg-white transition-all duration-200 hover:-translate-y-1.5 hover:shadow-card hover:border-transparent;
+  }
+  .field-label {
+    @apply mb-1.5 block text-[13.5px] font-semibold text-ink-2;
+  }
+  .field-input {
+    @apply w-full rounded-xl border border-line px-4 py-3 text-[15px] outline-none transition focus:border-royal focus:ring-2 focus:ring-royal/15;
+  }
+  .section {
+    @apply py-20 md:py-24;
+  }
+}
+
+/* hero atmosphere */
+.hero-bg {
+  background: radial-gradient(120% 120% at 80% -10%, #26367a 0%, #0d1b4b 45%, #070f2e 100%);
+}
+.hero-grid {
+  background-image: linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 54px 54px;
+  -webkit-mask-image: radial-gradient(circle at 50% 0, #000, transparent 75%);
+  mask-image: radial-gradient(circle at 50% 0, #000, transparent 75%);
+}
+.dark-band {
+  background: linear-gradient(135deg, #0d1b4b, #0a1540);
+}
+.thumb-pat::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.16), transparent 50%);
+}
+::-webkit-scrollbar { width: 11px; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* ============================================================
+   DARK MODE — centralized overrides (class strategy).
+   Light mode is unchanged. These rules only apply under .dark,
+   flipping neutral surfaces/text while keeping brand accents
+   (navy/royal/gold) and the already-dark hero/dark-band sections.
+   ============================================================ */
+.dark {
+  color-scheme: dark;
+}
+.dark body {
+  background-color: #080d1c;
+  color: #c7d0e0;
+}
+/* surfaces */
+.dark .bg-white { background-color: #0f1631 !important; }
+.dark .bg-white\/90 { background-color: rgba(15, 22, 49, 0.9) !important; }
+.dark .bg-white\/10 { background-color: rgba(255,255,255,0.08) !important; }
+.dark .bg-surface { background-color: #0b1126 !important; }
+.dark .bg-surface-2 { background-color: #131b39 !important; }
+/* borders */
+.dark .border-line { border-color: #1f2a4a !important; }
+.dark .border-surface-2 { border-color: #1b2444 !important; }
+/* text */
+.dark .text-navy { color: #e8ecf8 !important; }
+.dark .text-ink, .dark .text-ink-2 { color: #c7d0e0 !important; }
+.dark .text-ink-3 { color: #8b97b0 !important; }
+/* headings inherit flipped color */
+.dark h1, .dark h2, .dark h3, .dark h4 { color: #e8ecf8; }
+/* keep dark-band & hero readable (already dark) */
+.dark .dark-band, .dark .hero-bg { color: #fff; }
+/* inputs */
+.dark .field-input { background-color: #0b1126; border-color: #1f2a4a; color: #e8ecf8; }
+.dark .field-input::placeholder { color: #6b7896; }
+/* outline button on dark */
+.dark .btn-outline { background-color: #0f1631; color: #e8ecf8; border-color: #2a3760; }
+.dark .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+/* card hover shadow softer on dark */
+.dark .card-base:hover { box-shadow: 0 18px 44px -12px rgba(0,0,0,0.6); }
+/* scrollbar */
+.dark ::-webkit-scrollbar-thumb { background: #2a3760; }
+.dark ::-webkit-scrollbar-thumb:hover { background: #3a4a80; }

@@ -1,0 +1,198 @@
+import type { Scholarship } from "@/lib/types";
+import { slugify } from "@/lib/utils";
+
+/*
+ * SEED SCHOLARSHIP DATA — 20 major international programmes.
+ * Funding/benefit structures below reflect well-established, stable programme
+ * details. Deadlines are expressed as the programme's TYPICAL annual window.
+ * BACKEND NOTE: deadlines change every cycle — the admin/scholarship module
+ * should pull live dates from each official site before publishing.
+ */
+
+type S = Omit<Scholarship, "slug">;
+
+const raw: S[] = [
+  {
+    id: 1, name: "Erasmus Mundus Joint Masters", provider: "European Union", country: "Europe (multi-country)",
+    level: "Masters", funding: "Full", deadline: "Typically Dec–Jan (varies by programme)", flag: "🇪🇺",
+    website: "https://www.eacea.ec.europa.eu/scholarships/emjmd-catalogue_en",
+    overview: "A fully funded joint Masters where you study in two or more European countries within a consortium of universities and earn a joint or multiple degree. One of the most generous and prestigious scholarships in the world, open to applicants of all nationalities.",
+    benefits: ["Full tuition and participation costs", "Monthly living allowance (around €1,400/month for up to 24 months)", "Travel and installation contribution", "Comprehensive health insurance", "Study across 2–3 European countries"],
+    eligibility: ["Hold (or be completing) a relevant bachelor's degree", "Meet English proficiency (IELTS/TOEFL or equivalent)", "Not have spent more than 12 months in Europe in the last 5 years (for the full allowance)", "Apply directly to a specific EMJM programme"],
+    documents: ["Bachelor's degree / transcripts", "CV", "Motivation letter", "Language certificate", "References", "Passport"],
+  },
+  {
+    id: 2, name: "Chevening Scholarship", provider: "UK Government (FCDO)", country: "United Kingdom",
+    level: "Masters", funding: "Full", deadline: "Applications open Aug, close early Oct", flag: "🇬🇧",
+    website: "https://www.chevening.org/",
+    overview: "The UK government's flagship scholarship for emerging leaders — a fully funded one-year master's degree at any UK university. Over 60,000 awarded across 160+ countries since it began.",
+    benefits: ["Full university tuition fees", "Monthly living stipend", "Return economy airfare to the UK", "Arrival and departure allowances", "Visa application cost and travel grant for Chevening events"],
+    eligibility: ["Citizen of a Chevening-eligible country (Somalia included)", "At least 2,800 hours (≈2 years) of work experience", "An undergraduate degree qualifying for a UK master's", "Apply to 3 different eligible UK courses and secure an unconditional offer", "Commit to returning home for 2 years after the scholarship"],
+    documents: ["Undergraduate degree certificate", "Two references", "UK university offers", "Passport/ID", "Four Chevening essays (leadership, networking, study, career plan)"],
+  },
+  {
+    id: 3, name: "DAAD Scholarships", provider: "German Academic Exchange Service", country: "Germany",
+    level: "Masters / PhD", funding: "Full", deadline: "Typically Aug–Oct (programme dependent)", flag: "🇩🇪",
+    website: "https://www.daad.de/en/",
+    overview: "Germany's national funding body offering hundreds of scholarships for international postgraduate study and research, with strong programmes aimed at applicants from developing countries.",
+    benefits: ["Monthly stipend (≈€934 for Masters, €1,300 for PhD)", "Tuition coverage where applicable", "Health, accident and liability insurance", "Travel allowance", "Possible rent and family subsidies"],
+    eligibility: ["Bachelor's (or Masters for PhD) typically completed within the last 6 years", "Relevant work experience for development-related courses", "Language proficiency (German or English depending on programme)"],
+    documents: ["Degree certificates and transcripts", "CV (Europass)", "Motivation letter", "Recommendation letters", "Language certificate"],
+  },
+  {
+    id: 4, name: "Türkiye Bursları (Türkiye Scholarships)", provider: "Government of Türkiye", country: "Türkiye",
+    level: "Bachelor / Masters / PhD", funding: "Full", deadline: "Typically Jan–Feb", flag: "🇹🇷",
+    website: "https://www.turkiyeburslari.gov.tr/",
+    overview: "A fully funded, government-backed programme covering all study levels. Highly popular among Somali students, with university placement handled for you.",
+    benefits: ["Full tuition", "Monthly stipend", "Free accommodation", "Health insurance", "Return flight tickets", "One year of free Turkish language course"],
+    eligibility: ["Within the programme's age limits (varies by level)", "Strong academic record (minimum GPAs apply)", "Not currently enrolled at a Turkish university"],
+    documents: ["Diploma/transcripts", "Passport/ID", "Exam results (where required)", "Statement of purpose", "Reference letters"],
+  },
+  {
+    id: 5, name: "MEXT Scholarship", provider: "Government of Japan", country: "Japan",
+    level: "All levels", funding: "Full", deadline: "Embassy track typically Apr–May", flag: "🇯🇵",
+    website: "https://www.studyinjapan.go.jp/en/",
+    overview: "The Japanese government's scholarship for undergraduate, research and specialised study, available via embassy recommendation or university recommendation.",
+    benefits: ["Full tuition", "Monthly stipend (~117,000–145,000 JPY)", "Return airfare", "No application fees", "Japanese language training"],
+    eligibility: ["Meet age and academic requirements for the chosen level", "Willingness to study Japanese", "Good health"],
+    documents: ["Academic transcripts", "Recommendation letters", "Field of study & research plan", "Medical certificate", "Passport"],
+  },
+  {
+    id: 6, name: "Fulbright Foreign Student Program", provider: "U.S. Government", country: "United States",
+    level: "Masters / PhD", funding: "Full", deadline: "Varies by country (often spring)", flag: "🇺🇸",
+    website: "https://foreign.fulbrightonline.org/",
+    overview: "The U.S. government's flagship international exchange scholarship for graduate study, research and teaching, administered through local embassies and commissions.",
+    benefits: ["Tuition and fees", "Living stipend", "Round-trip airfare", "Health benefits", "Visa sponsorship support"],
+    eligibility: ["Bachelor's degree", "Strong academic and leadership record", "English proficiency", "Citizen of a participating country"],
+    documents: ["Transcripts", "Statement of purpose", "Study/research objective", "Recommendation letters", "Test scores (TOEFL/GRE where required)"],
+  },
+  {
+    id: 7, name: "Commonwealth Scholarships", provider: "UK / CSC", country: "United Kingdom",
+    level: "Masters / PhD", funding: "Full", deadline: "Typically Oct–Dec", flag: "🇬🇧",
+    website: "https://cscuk.fcdo.gov.uk/",
+    overview: "Scholarships for students from Commonwealth and eligible low/middle-income countries to study in the UK, with a focus on development impact.",
+    benefits: ["Full tuition", "Living stipend", "Return airfare", "Thesis and study-travel grants", "Family allowances where eligible"],
+    eligibility: ["Citizen of an eligible Commonwealth/low-income country", "Relevant undergraduate degree", "Unable to afford UK study otherwise", "Commitment to development goals"],
+    documents: ["Degree certificates", "References", "Development impact statement", "Proof of citizenship"],
+  },
+  {
+    id: 8, name: "Aga Khan Foundation ISP", provider: "Aga Khan Foundation", country: "Global",
+    level: "Masters / PhD", funding: "Partial", deadline: "Typically Jan–Mar", flag: "🌍",
+    website: "https://www.akdn.org/our-agencies/aga-khan-foundation/international-scholarship-programme",
+    overview: "A competitive, partial scholarship (50% grant / 50% loan) for outstanding students from selected developing countries, including parts of East Africa.",
+    benefits: ["Tuition and living costs (50% grant, 50% interest-free loan)", "Half-yearly disbursement", "Priority to first-time postgraduates"],
+    eligibility: ["Resident in an eligible AKF country", "Under 30 (preferred)", "Excellent academic record", "Secured university admission first"],
+    documents: ["Admission letter", "Transcripts", "Financial documents", "References", "Personal statement"],
+  },
+  {
+    id: 9, name: "Chinese Government Scholarship (CSC)", provider: "China Scholarship Council", country: "China",
+    level: "All levels", funding: "Full", deadline: "Typically Dec–Apr", flag: "🇨🇳",
+    website: "https://www.campuschina.org/",
+    overview: "A broad government scholarship offering full funding across hundreds of Chinese universities, accessible via embassy, university or bilateral programme channels.",
+    benefits: ["Full or partial tuition", "Monthly stipend", "On-campus accommodation or housing allowance", "Comprehensive medical insurance"],
+    eligibility: ["Non-Chinese citizen in good health", "Meet age and academic level requirements", "Chinese or English proficiency depending on programme"],
+    documents: ["Academic transcripts", "Study plan", "Recommendation letters", "Physical examination form", "Admission/pre-admission letter"],
+  },
+  {
+    id: 10, name: "National Scholarship Programme of Slovakia", provider: "Government of Slovakia", country: "Slovakia",
+    level: "Masters / PhD", funding: "Partial", deadline: "Typically Apr & Oct", flag: "🇸🇰",
+    website: "https://www.scholarships.sk/",
+    overview: "A mobility scholarship supporting international students and researchers for study, research or teaching stays at Slovak universities.",
+    benefits: ["Monthly scholarship (€620–€1,025 depending on level)", "Living and travel support", "Short-to-medium-term study stays"],
+    eligibility: ["Enrolled student or researcher abroad", "Accepted by a Slovak host institution", "Relevant academic standing"],
+    documents: ["Acceptance/invitation letter", "CV", "Study or research plan", "References"],
+  },
+  {
+    id: 11, name: "Swedish Institute Scholarships (SISGP)", provider: "Swedish Institute", country: "Sweden",
+    level: "Masters", funding: "Full", deadline: "Typically Feb", flag: "🇸🇪",
+    website: "https://si.se/en/apply/scholarships/",
+    overview: "Fully funded master's scholarships for global professionals from selected countries who show leadership experience and a commitment to a sustainable future.",
+    benefits: ["Full tuition", "Monthly living grant (SEK 12,000)", "Travel grant", "Insurance", "Access to a leadership network"],
+    eligibility: ["Citizen of an eligible country", "Work/leadership experience (≈3,000 hours)", "Admitted to an eligible Swedish master's programme"],
+    documents: ["University admission", "CV", "Motivation letter", "Two references", "Proof of work experience"],
+  },
+  {
+    id: 12, name: "Eiffel Excellence Scholarship", provider: "Government of France", country: "France",
+    level: "Masters / PhD", funding: "Full", deadline: "Typically Jan (via institution)", flag: "🇫🇷",
+    website: "https://www.campusfrance.org/en/eiffel-scholarship-program-of-excellence",
+    overview: "A French government scholarship to attract top international students to French institutions, nominated by the host university.",
+    benefits: ["Monthly allowance (≈€1,181 Masters / €1,700 PhD)", "Return airfare", "Health insurance", "Cultural activities", "Possible accommodation allowance"],
+    eligibility: ["Non-French nationality", "Under the programme age limits", "Nominated by a French host institution"],
+    documents: ["Institution nomination", "Transcripts", "CV", "Motivation letter", "References"],
+  },
+  {
+    id: 13, name: "Orange Knowledge Programme", provider: "Nuffic (Netherlands)", country: "Netherlands",
+    level: "Masters / Short courses", funding: "Full", deadline: "Multiple rounds yearly", flag: "🇳🇱",
+    website: "https://www.studyinnl.org/finances/orange-knowledge-programme",
+    overview: "Dutch government-funded scholarships for professionals from selected developing countries, focused on capacity building and development relevance.",
+    benefits: ["Tuition fees", "Living allowance", "Travel costs", "Insurance", "Visa costs"],
+    eligibility: ["Working professional from an eligible country", "Nominated/endorsed by employer", "Admitted to an eligible Dutch programme"],
+    documents: ["Admission letter", "Employer statement", "Motivation letter", "Government statement (where required)"],
+  },
+  {
+    id: 14, name: "Australia Awards Scholarships", provider: "Government of Australia", country: "Australia",
+    level: "Masters / PhD", funding: "Full", deadline: "Typically Apr–Jun", flag: "🇦🇺",
+    website: "https://www.dfat.gov.au/people-to-people/australia-awards",
+    overview: "Long-term development scholarships for study at Australian universities for applicants from eligible partner countries.",
+    benefits: ["Full tuition", "Return air travel", "Establishment allowance", "Living stipend", "Health cover and academic support"],
+    eligibility: ["Citizen of a participating country", "Meet age and academic requirements", "Commit to returning home for 2 years after study"],
+    documents: ["Transcripts", "CV", "Development impact statement", "References", "Proof of citizenship"],
+  },
+  {
+    id: 15, name: "Gates Cambridge Scholarship", provider: "Gates Cambridge Trust", country: "United Kingdom",
+    level: "Masters / PhD", funding: "Full", deadline: "Typically Oct–Dec", flag: "🇬🇧",
+    website: "https://www.gatescambridge.org/",
+    overview: "A highly competitive, fully funded scholarship to pursue postgraduate study at the University of Cambridge for outstanding applicants worldwide.",
+    benefits: ["Full tuition", "Maintenance allowance", "Airfare", "Family and academic development funding"],
+    eligibility: ["Apply to an eligible Cambridge course", "Outstanding academic record", "Leadership and commitment to improving others' lives"],
+    documents: ["Cambridge application", "Research proposal/statement", "References", "Transcripts"],
+  },
+  {
+    id: 16, name: "Mastercard Foundation Scholars", provider: "Mastercard Foundation", country: "Africa & Global",
+    level: "Bachelor / Masters", funding: "Full", deadline: "Varies by partner university", flag: "🌍",
+    website: "https://mastercardfdn.org/all/scholars/",
+    overview: "A comprehensive programme supporting academically talented yet economically disadvantaged young people, particularly from Africa, with strong leadership and giving-back values.",
+    benefits: ["Full tuition and fees", "Accommodation and living costs", "Books and learning materials", "Mentorship and leadership training", "Transition and internship support"],
+    eligibility: ["Demonstrated financial need", "Strong academic potential", "Commitment to community and leadership", "From an eligible (often African) country"],
+    documents: ["Transcripts", "Financial need evidence", "Essays", "References"],
+  },
+  {
+    id: 17, name: "KAUST Fellowship", provider: "King Abdullah University", country: "Saudi Arabia",
+    level: "Masters / PhD", funding: "Full", deadline: "Rolling / typically Jan", flag: "🇸🇦",
+    website: "https://www.kaust.edu.sa/en/study/apply",
+    overview: "A fully funded fellowship in science and technology at a graduate research university, with generous support and no separate scholarship application.",
+    benefits: ["Full tuition", "Monthly living stipend", "On-campus housing", "Medical and dental coverage", "Relocation support"],
+    eligibility: ["Strong background in science, engineering or technology", "Competitive GPA", "English proficiency"],
+    documents: ["Transcripts", "Statement of purpose", "CV", "Recommendation letters", "Test scores (where required)"],
+  },
+  {
+    id: 18, name: "Rhodes Scholarship", provider: "Rhodes Trust", country: "United Kingdom",
+    level: "Masters / PhD", funding: "Full", deadline: "Varies by constituency (often mid-year)", flag: "🇬🇧",
+    website: "https://www.rhodeshouse.ox.ac.uk/",
+    overview: "One of the oldest and most prestigious international scholarships, funding postgraduate study at the University of Oxford for exceptional young leaders.",
+    benefits: ["Full Oxford tuition and college fees", "Annual living stipend", "Airfare to and from Oxford", "Visa and settling-in support"],
+    eligibility: ["Within the age range (typically 18–24)", "Outstanding academic record", "Leadership, character and commitment to service", "From an eligible constituency"],
+    documents: ["Academic transcripts", "Personal statement", "References", "Proof of eligibility"],
+  },
+  {
+    id: 19, name: "Holland Scholarship", provider: "Dutch Ministry & Universities", country: "Netherlands",
+    level: "Bachelor / Masters", funding: "Partial", deadline: "Typically Feb–May", flag: "🇳🇱",
+    website: "https://www.studyinnl.org/finances/holland-scholarship",
+    overview: "A one-time grant for international (non-EEA) students enrolling at participating Dutch research universities or universities of applied sciences.",
+    benefits: ["One-time grant of €5,000 in the first year", "Awarded alongside university admission"],
+    eligibility: ["Non-EEA nationality", "First-time enrolment at a participating Dutch institution", "Not previously studied in the Netherlands"],
+    documents: ["Admission/application to a Dutch programme", "Transcripts", "Motivation (where required)"],
+  },
+  {
+    id: 20, name: "Knight-Hennessy Scholars", provider: "Stanford University", country: "United States",
+    level: "Masters / PhD", funding: "Full", deadline: "Typically Oct", flag: "🇺🇸",
+    website: "https://knight-hennessy.stanford.edu/",
+    overview: "A fully funded graduate scholarship at Stanford across any of its graduate schools, developing a multidisciplinary community of future global leaders.",
+    benefits: ["Full tuition and fees", "Living and academic stipend", "Travel allowance", "Leadership development programme"],
+    eligibility: ["Apply to a Stanford graduate programme", "Earned first/bachelor's degree recently (timing rules apply)", "Demonstrated leadership and independence of thought"],
+    documents: ["Stanford graduate application", "Essays", "References", "Transcripts", "Test scores (where required)"],
+  },
+];
+
+export const scholarships: Scholarship[] = raw.map((s) => ({ ...s, slug: slugify(s.name) }));
+export const getScholarship = (slug: string) => scholarships.find((s) => s.slug === slug);
