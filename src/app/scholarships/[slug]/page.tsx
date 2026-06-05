@@ -3,22 +3,24 @@ import { notFound } from "next/navigation";
 import {
   ChevronRight, ExternalLink, Calendar, MapPin, CheckCircle2, FileText, GraduationCap,
 } from "lucide-react";
-import { scholarships, getScholarship } from "@/lib/data/scholarships";
-
-export function generateStaticParams() {
-  return scholarships.map((s) => ({ slug: s.slug }));
-}
+import {
+  getScholarshipDetail,
+  scholarshipExternalUrl,
+} from "@/lib/api/scholarship.service";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const s = getScholarship(slug);
-  return { title: s ? s.name : "Scholarship" };
+  const detail = await getScholarshipDetail(slug);
+  return { title: detail ? detail.scholarship.name : "Scholarship" };
 }
 
 export default async function ScholarshipDetail({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const s = getScholarship(slug);
-  if (!s) notFound();
+  const detail = await getScholarshipDetail(slug);
+  if (!detail) notFound();
+
+  const { scholarship: s, cta } = detail;
+  const ctaHref = scholarshipExternalUrl(cta.url);
 
   return (
     <div>
@@ -79,7 +81,9 @@ export default async function ScholarshipDetail({ params }: { params: Promise<{ 
               <div className="flex justify-between border-t border-surface-2 py-2.5 text-[14px]"><span className="text-ink-3">Level</span><b className="text-right text-navy">{s.level}</b></div>
               <div className="flex justify-between border-t border-surface-2 py-2.5 text-[14px]"><span className="text-ink-3">Funding</span><b className="text-navy">{s.funding}</b></div>
               <div className="flex justify-between border-t border-surface-2 py-2.5 text-[14px]"><span className="text-ink-3">Deadline</span><b className="text-right text-navy">{s.deadline}</b></div>
-              <a href={s.website} target="_blank" rel="noopener noreferrer" className="btn btn-gold mt-5 w-full">Official Website <ExternalLink size={16} /></a>
+              <a href={ctaHref} target="_blank" rel="noopener noreferrer" className="btn btn-gold mt-5 w-full">
+                {cta.label} <ExternalLink size={16} />
+              </a>
               <p className="mt-3 text-center text-[12px] text-ink-3">Confirm the live deadline on the official site.</p>
             </div>
           </aside>

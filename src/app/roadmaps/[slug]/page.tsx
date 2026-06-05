@@ -1,23 +1,22 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronRight, ArrowRight, BadgeCheck } from "lucide-react";
-import { roadmaps, getRoadmap } from "@/lib/data/roadmaps";
+import { getRoadmapDetail } from "@/lib/api/roadmap.service";
+import { cmsUrl } from "@/lib/api/cms";
 import { Icon } from "@/lib/icon-map";
-
-export function generateStaticParams() {
-  return roadmaps.map((r) => ({ slug: r.id }));
-}
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const r = getRoadmap(slug);
-  return { title: r ? `${r.title} Roadmap` : "Roadmap" };
+  const detail = await getRoadmapDetail(slug);
+  return { title: detail ? `${detail.roadmap.title} Roadmap` : "Roadmap" };
 }
 
 export default async function RoadmapDetail({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const r = getRoadmap(slug);
-  if (!r) notFound();
+  const detail = await getRoadmapDetail(slug);
+  if (!detail) notFound();
+
+  const { roadmap: r, skillsRequired, cta } = detail;
 
   return (
     <div>
@@ -48,7 +47,7 @@ export default async function RoadmapDetail({ params }: { params: Promise<{ slug
             <h2 className="mb-4 text-[22px] font-semibold text-navy">Learning path</h2>
             <div className="overflow-hidden rounded-2xl border border-line">
               {r.steps.map((step, i) => (
-                <div key={step.title} className="flex items-start justify-between gap-4 border-b border-surface-2 p-5 last:border-b-0">
+                <div key={`${step.title}-${i}`} className="flex items-start justify-between gap-4 border-b border-surface-2 p-5 last:border-b-0">
                   <div className="flex items-start gap-3.5">
                     <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-navy text-[13px] font-extrabold text-gold">{i + 1}</span>
                     <div>
@@ -68,8 +67,10 @@ export default async function RoadmapDetail({ params }: { params: Promise<{ slug
               <div className="flex justify-between border-t border-surface-2 py-2.5 text-[14px]"><span className="text-ink-3">Market demand</span><span className="rounded-md bg-[#ECFDF5] px-2 py-0.5 text-[11px] font-extrabold text-[#047857]">{r.demand}</span></div>
               <div className="flex justify-between border-t border-surface-2 py-2.5 text-[14px]"><span className="text-ink-3">Salary range</span><b className="text-navy">{r.salary}</b></div>
               <div className="flex justify-between border-t border-surface-2 py-2.5 text-[14px]"><span className="text-ink-3">Time to job-ready</span><b className="text-navy">{r.months} months</b></div>
-              <div className="flex justify-between border-t border-surface-2 py-2.5 text-[14px]"><span className="text-ink-3">Skills required</span><b className="text-navy">{r.skills.length}</b></div>
-              <Link href="/courses" className="btn btn-gold mt-5 w-full">Start this path <ArrowRight size={17} /></Link>
+              <div className="flex justify-between border-t border-surface-2 py-2.5 text-[14px]"><span className="text-ink-3">Skills required</span><b className="text-navy">{skillsRequired}</b></div>
+              <Link href={cmsUrl(cta.url)} className="btn btn-gold mt-5 w-full">
+                {cta.label} <ArrowRight size={17} />
+              </Link>
             </div>
           </aside>
         </div>

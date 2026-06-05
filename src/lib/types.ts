@@ -56,7 +56,7 @@ export interface Module {
 }
 
 export interface Scholarship {
-  id: number;
+  id: string | number;
   slug: string;
   name: string;
   provider: string;
@@ -98,6 +98,7 @@ export interface BlogPost {
 }
 
 export interface Testimonial {
+  id?: string;
   name: string;
   role: string;
   text: string;
