@@ -14,7 +14,15 @@ const prices = [
   { id: "paid", label: "Paid" },
 ];
 
-export function CoursesExplorer({ courses, initialCat = "all" }: { courses: Course[]; initialCat?: string }) {
+export function CoursesExplorer({
+  courses,
+  initialCat = "all",
+  emptyStateText = "No courses found.",
+}: {
+  courses: Course[];
+  initialCat?: string;
+  emptyStateText?: string;
+}) {
   const [q, setQ] = useState("");
   const [cat, setCat] = useState(initialCat);
   const [price, setPrice] = useState("all");
@@ -96,9 +104,9 @@ export function CoursesExplorer({ courses, initialCat = "all" }: { courses: Cour
             {filtered.map((c) => <CourseCard key={c.id} c={c} />)}
           </div>
         ) : (
-          <div className="py-16 text-center text-ink-3">
-            <Search size={40} className="mx-auto mb-3" />
-            <p>No courses match your filters. Try clearing some.</p>
+          <div className="rounded-2xl border border-line bg-surface px-6 py-14 text-center">
+            <Search size={40} className="mx-auto mb-3 text-ink-3" />
+            <p className="text-[17px] font-semibold text-navy">{emptyStateText}</p>
           </div>
         )}
       </div>

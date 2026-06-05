@@ -66,7 +66,7 @@ export default async function RoadmapDetail({ params }: { params: Promise<{ slug
               <h4 className="mb-4 font-sans text-[15px] font-bold text-navy">Role snapshot</h4>
               <div className="flex justify-between border-t border-surface-2 py-2.5 text-[14px]"><span className="text-ink-3">Market demand</span><span className="rounded-md bg-[#ECFDF5] px-2 py-0.5 text-[11px] font-extrabold text-[#047857]">{r.demand}</span></div>
               <div className="flex justify-between border-t border-surface-2 py-2.5 text-[14px]"><span className="text-ink-3">Salary range</span><b className="text-navy">{r.salary}</b></div>
-              <div className="flex justify-between border-t border-surface-2 py-2.5 text-[14px]"><span className="text-ink-3">Time to job-ready</span><b className="text-navy">{r.months} months</b></div>
+              <div className="flex justify-between border-t border-surface-2 py-2.5 text-[14px]"><span className="text-ink-3">Time to job-ready</span><b className="text-navy">{r.timeline}</b></div>
               <div className="flex justify-between border-t border-surface-2 py-2.5 text-[14px]"><span className="text-ink-3">Skills required</span><b className="text-navy">{skillsRequired}</b></div>
               <Link href={cmsUrl(cta.url)} className="btn btn-gold mt-5 w-full">
                 {cta.label} <ArrowRight size={17} />

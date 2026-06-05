@@ -1,4 +1,6 @@
 import { api } from "@/api/http";
+import { roadmapTimelineLabel } from "@/lib/api/roadmap-timeline";
+import { sortBySortOrder } from "@/lib/api/sort-order";
 import type { Roadmap } from "@/lib/types";
 import type {
   PaginatedRoadmaps,
@@ -26,6 +28,21 @@ function visibleRoadmaps(rows: RoadmapApiRecord[]) {
   return rows.filter((r) => r.isVisible !== false && r.isPublished !== false);
 }
 
+function roadmapTimestamp(record: RoadmapApiRecord): number {
+  const raw = record.updated_at ?? record.created_at;
+  const time = raw ? new Date(String(raw)).getTime() : 0;
+  return Number.isFinite(time) ? time : 0;
+}
+
+/** Latest saved first — used on /roadmaps listing only. */
+export function sortRoadmapsByLatest(rows: RoadmapApiRecord[]): RoadmapApiRecord[] {
+  return [...rows].sort((a, b) => {
+    const byTime = roadmapTimestamp(b) - roadmapTimestamp(a);
+    if (byTime !== 0) return byTime;
+    return Number(b.sortOrder ?? 0) - Number(a.sortOrder ?? 0);
+  });
+}
+
 export function toRoadmap(record: RoadmapApiRecord): Roadmap {
   const steps = (record.steps ?? [])
     .filter((s) => s.isVisible !== false)
@@ -42,6 +59,7 @@ export function toRoadmap(record: RoadmapApiRecord): Roadmap {
     demand: normalizeDemand(record.demand),
     salary: record.salary?.trim() || "—",
     months: Number(record.months) || 0,
+    timeline: roadmapTimelineLabel(record),
     skills: Array.isArray(record.skills) ? record.skills.filter(Boolean) : [],
     description: record.description?.trim() || "",
     steps,
@@ -75,12 +93,12 @@ export async function getAllRoadmaps(
   return api.get<PaginatedRoadmaps>(`${BASE}/getAll?${q}`, { signal: opts?.signal });
 }
 
-/** First four published roadmaps for the home section. */
+/** Published roadmaps for the home section, ordered by sortOrder. */
 export async function getHomeRoadmaps(): Promise<Roadmap[]> {
   try {
-    const res = await getAllRoadmaps({ page: 1, pageSize: 4, isPublished: true });
+    const res = await getAllRoadmaps({ page: 1, pageSize: 100, isPublished: true });
     if (!Array.isArray(res.data)) return [];
-    return visibleRoadmaps(res.data).slice(0, 4).map(toRoadmap);
+    return sortBySortOrder(visibleRoadmaps(res.data)).map(toRoadmap);
   } catch {
     return [];
   }
@@ -94,26 +112,28 @@ const EMPTY_ROADMAPS_PAGE: RoadmapsPageResult = {
   pageSize: ROADMAPS_PAGE_SIZE,
 };
 
-/** Paginated roadmaps for /roadmaps listing (8 per page). */
+/** Paginated roadmaps for /roadmaps listing (latest saved first). */
 export async function getRoadmapsPage(
   page = 1,
   pageSize = ROADMAPS_PAGE_SIZE
 ): Promise<RoadmapsPageResult> {
   try {
     const safePage = Math.max(1, page);
-    const res = await getAllRoadmaps({
-      page: safePage,
-      pageSize,
-      isPublished: true,
-    });
-    const rows = Array.isArray(res.data) ? visibleRoadmaps(res.data) : [];
-    const pages = Math.max(1, res.pages ?? 1);
+    const res = await getAllRoadmaps({ page: 1, pageSize: 500, isPublished: true });
+    const allRows = Array.isArray(res.data)
+      ? sortRoadmapsByLatest(visibleRoadmaps(res.data))
+      : [];
+    const rows = allRows.length;
+    const pages = Math.max(1, Math.ceil(rows / pageSize));
+    const currentPage = Math.min(safePage, pages);
+    const start = (currentPage - 1) * pageSize;
+
     return {
-      roadmaps: rows.map(toRoadmap),
-      page: Math.min(safePage, pages),
+      roadmaps: allRows.slice(start, start + pageSize).map(toRoadmap),
+      page: currentPage,
       pages,
-      rows: res.rows ?? rows.length,
-      pageSize: res.pageSize ?? pageSize,
+      rows,
+      pageSize,
     };
   } catch {
     return EMPTY_ROADMAPS_PAGE;

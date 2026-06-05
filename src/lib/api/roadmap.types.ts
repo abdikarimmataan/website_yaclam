@@ -14,11 +14,15 @@ export type RoadmapApiRecord = {
   demand?: string;
   salary?: string;
   months?: number;
+  timeToJobReady?: string;
+  timeToJobReadyDisplay?: string;
   skillsRequired?: number;
   steps?: RoadmapStepApi[];
   sortOrder?: number;
   isVisible?: boolean;
   isPublished?: boolean;
+  created_at?: string;
+  updated_at?: string;
   ctaButton?: {
     label?: string;
     url?: string;

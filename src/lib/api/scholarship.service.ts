@@ -1,4 +1,6 @@
 import { api } from "@/api/http";
+import { sortBySortOrder } from "@/lib/api/sort-order";
+import { formatDisplayDate } from "@/lib/date-format";
 import type { Scholarship } from "@/lib/types";
 import { slugify } from "@/lib/utils";
 import type {
@@ -10,8 +12,7 @@ import type {
 
 const BASE = "/scholarship";
 
-export const SCHOLARSHIPS_PAGE_SIZE = 9;
-export const HOME_SCHOLARSHIPS_COUNT = 4;
+export const SCHOLARSHIPS_PAGE_SIZE = 8;
 
 export type ScholarshipListParams = {
   page?: number;
@@ -34,6 +35,7 @@ function scholarshipTimestamp(record: ScholarshipApiRecord): number {
   return Number.isFinite(time) ? time : 0;
 }
 
+/** Latest saved first — used on /scholarships listing only. */
 export function sortScholarshipsByLatest(rows: ScholarshipApiRecord[]): ScholarshipApiRecord[] {
   return [...rows].sort((a, b) => {
     const byTime = scholarshipTimestamp(b) - scholarshipTimestamp(a);
@@ -59,7 +61,7 @@ export function toScholarship(record: ScholarshipApiRecord): Scholarship {
     country: record.country?.trim() || "—",
     level: record.level?.trim() || "—",
     funding: normalizeFunding(record.funding),
-    deadline: record.deadline?.trim() || "—",
+    deadline: formatDisplayDate(String(record.deadline ?? "")) || "—",
     flag: record.flag?.trim() || "🌍",
     website,
     overview,
@@ -98,14 +100,12 @@ export async function getAllScholarships(
   return api.get<PaginatedScholarships>(`${BASE}/getAll?${q}`, { signal: opts?.signal });
 }
 
-/** Four most recently saved published scholarships for the home section. */
+/** Published scholarships for the home section, ordered by sortOrder. */
 export async function getHomeScholarships(): Promise<Scholarship[]> {
   try {
     const res = await getAllScholarships({ page: 1, pageSize: 100, isPublished: true });
     if (!Array.isArray(res.data)) return [];
-    return sortScholarshipsByLatest(visibleScholarships(res.data))
-      .slice(0, HOME_SCHOLARSHIPS_COUNT)
-      .map(toScholarship);
+    return sortBySortOrder(visibleScholarships(res.data)).map(toScholarship);
   } catch {
     return [];
   }
@@ -119,26 +119,28 @@ const EMPTY_SCHOLARSHIPS_PAGE: ScholarshipsPageResult = {
   pageSize: SCHOLARSHIPS_PAGE_SIZE,
 };
 
-/** Paginated scholarships for /scholarships listing. */
+/** Paginated scholarships for /scholarships listing (latest saved first). */
 export async function getScholarshipsPage(
   page = 1,
   pageSize = SCHOLARSHIPS_PAGE_SIZE
 ): Promise<ScholarshipsPageResult> {
   try {
     const safePage = Math.max(1, page);
-    const res = await getAllScholarships({
-      page: safePage,
-      pageSize,
-      isPublished: true,
-    });
-    const rows = Array.isArray(res.data) ? visibleScholarships(res.data) : [];
-    const pages = Math.max(1, res.pages ?? 1);
+    const res = await getAllScholarships({ page: 1, pageSize: 500, isPublished: true });
+    const allRows = Array.isArray(res.data)
+      ? sortScholarshipsByLatest(visibleScholarships(res.data))
+      : [];
+    const rows = allRows.length;
+    const pages = Math.max(1, Math.ceil(rows / pageSize));
+    const currentPage = Math.min(safePage, pages);
+    const start = (currentPage - 1) * pageSize;
+
     return {
-      scholarships: rows.map(toScholarship),
-      page: Math.min(safePage, pages),
+      scholarships: allRows.slice(start, start + pageSize).map(toScholarship),
+      page: currentPage,
       pages,
-      rows: res.rows ?? rows.length,
-      pageSize: res.pageSize ?? pageSize,
+      rows,
+      pageSize,
     };
   } catch {
     return EMPTY_SCHOLARSHIPS_PAGE;

@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { MapPin, Calendar, ArrowUpRight } from "lucide-react";
+import { ScholarshipFlag } from "@/components/shared/scholarship-flag";
 import type { Scholarship } from "@/lib/types";
 
 export function ScholarshipCard({ s }: { s: Scholarship }) {
   return (
     <article className="card-base">
       <div className="thumb-pat relative grid h-[120px] place-items-center text-[44px]" style={{ background: "linear-gradient(135deg, #1F3A93, #0D1B4B)" }}>
-        <span className="relative">{s.flag}</span>
+        <ScholarshipFlag flag={s.flag} name={s.name} className="relative text-[44px]" imageClassName="h-14 w-20" />
         <span className={`absolute left-3 top-3 rounded-md px-2.5 py-1 text-[11.5px] font-extrabold uppercase tracking-wide ${s.funding === "Full" ? "bg-success text-white" : "bg-gold text-navy"}`}>{s.funding} Funding</span>
       </div>
       <Link href={`/scholarships/${s.slug}`} className="flex flex-1 flex-col gap-2 p-[18px]">

@@ -1,3 +1,18 @@
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:9000/api";
+
+function apiOrigin(): string {
+  return API_BASE.replace(/\/api\/?$/, "");
+}
+
+/** Resolve `/uploads/...` or absolute URLs for media served by the API server. */
+export function uploadUrl(path: string | undefined): string | null {
+  const trimmed = path?.trim();
+  if (!trimmed) return null;
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  if (trimmed.startsWith("/uploads/")) return `${apiOrigin()}${trimmed}`;
+  return null;
+}
+
 /** Normalize legacy `.html` paths from the CMS to Next.js routes. */
 export function cmsUrl(url: string | undefined): string {
   if (!url) return "/";
