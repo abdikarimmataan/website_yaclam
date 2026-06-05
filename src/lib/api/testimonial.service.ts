@@ -1,4 +1,5 @@
 import { api } from "@/api/http";
+import { sortBySortOrder } from "@/lib/api/sort-order";
 import type { Testimonial } from "@/lib/types";
 import type {
   PaginatedTestimonials,
@@ -6,8 +7,6 @@ import type {
 } from "@/lib/api/testimonial.types";
 
 const BASE = "/testimonial";
-
-export const HOME_TESTIMONIALS_COUNT = 4;
 
 export type TestimonialListParams = {
   page?: number;
@@ -23,20 +22,6 @@ function deriveInitials(name: string): string {
 
 function visibleTestimonials(rows: TestimonialApiRecord[]) {
   return rows.filter((t) => t.isVisible !== false);
-}
-
-function testimonialTimestamp(record: TestimonialApiRecord): number {
-  const raw = record.updated_at ?? record.created_at;
-  const time = raw ? new Date(String(raw)).getTime() : 0;
-  return Number.isFinite(time) ? time : 0;
-}
-
-export function sortTestimonialsByLatest(rows: TestimonialApiRecord[]): TestimonialApiRecord[] {
-  return [...rows].sort((a, b) => {
-    const byTime = testimonialTimestamp(b) - testimonialTimestamp(a);
-    if (byTime !== 0) return byTime;
-    return Number(b.sortOrder ?? 0) - Number(a.sortOrder ?? 0);
-  });
 }
 
 export function toTestimonial(record: TestimonialApiRecord): Testimonial {
@@ -60,14 +45,12 @@ export async function getAllTestimonials(
   return api.get<PaginatedTestimonials>(`${BASE}/getAll?${q}`, { signal: opts?.signal });
 }
 
-/** Four most recently saved visible testimonials for the home Learners section. */
+/** Visible testimonials for the home Learners section, ordered by sortOrder. */
 export async function getHomeTestimonials(): Promise<Testimonial[]> {
   try {
     const res = await getAllTestimonials({ page: 1, pageSize: 100 });
     if (!Array.isArray(res.data)) return [];
-    return sortTestimonialsByLatest(visibleTestimonials(res.data))
-      .slice(0, HOME_TESTIMONIALS_COUNT)
-      .map(toTestimonial);
+    return sortBySortOrder(visibleTestimonials(res.data)).map(toTestimonial);
   } catch {
     return [];
   }

@@ -1,4 +1,5 @@
 import { api } from "@/api/http";
+import { sortBySortOrder } from "@/lib/api/sort-order";
 import type { PaginatedWhyYaclam, WhyYaclamItem } from "@/lib/api/why-yaclam.types";
 
 const BASE = "/why_yaclam";
@@ -18,12 +19,12 @@ export async function getAllWhyYaclam(
   return api.get<PaginatedWhyYaclam>(`${BASE}/getAll?${q}`, { signal: opts?.signal });
 }
 
-/** First page of why-yaclam cards for the home section (max 10). */
+/** Visible why-yaclam cards for the home section, ordered by sortOrder. */
 export async function getWhyYaclamCards(): Promise<WhyYaclamItem[]> {
   try {
-    const res = await getAllWhyYaclam({ page: 1, pageSize: 10 });
+    const res = await getAllWhyYaclam({ page: 1, pageSize: 100 });
     if (!Array.isArray(res.data)) return [];
-    return res.data.filter((item) => item.isVisible !== false).slice(0, 10);
+    return sortBySortOrder(res.data.filter((item) => item.isVisible !== false));
   } catch {
     return [];
   }

@@ -12,7 +12,7 @@ export function RoadmapCard({ r }: { r: Roadmap }) {
       <p className="mb-3.5 mt-2 min-h-[42px] text-[13.5px] text-ink-3">{r.description}</p>
       <div className="flex justify-between border-t border-surface-2 py-1.5 text-[13px]"><span>Demand</span><span className="rounded-md bg-[#ECFDF5] px-2 py-0.5 text-[11px] font-extrabold text-[#047857]">{r.demand}</span></div>
       <div className="flex justify-between border-t border-surface-2 py-1.5 text-[13px]"><span>Salary</span><b className="text-navy">{r.salary}</b></div>
-      <div className="flex justify-between border-t border-surface-2 py-1.5 text-[13px]"><span>Timeline</span><b className="text-navy">{r.months} months</b></div>
+      <div className="flex justify-between border-t border-surface-2 py-1.5 text-[13px]"><span>Timeline</span><b className="text-navy">{r.timeline}</b></div>
     </Link>
   );
 }

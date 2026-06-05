@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { Sparkles, Target, Globe, ShieldCheck, Layers, ArrowRight } from "lucide-react";
-
-export const metadata = { title: "About" };
+import { getPageCmsConfig } from "@/lib/api/page-cms.service";
 
 const mv = [
   { icon: Target, t: "Mission", d: "Empower Somali learners worldwide through accessible, high-quality education delivered in the language they understand best." },
@@ -10,17 +9,24 @@ const mv = [
   { icon: Layers, t: "Ecosystem", d: "Courses, scholarships, roadmaps and certificates — everything in one trusted place." },
 ];
 
-export default function AboutPage() {
+export async function generateMetadata() {
+  const cms = await getPageCmsConfig("about");
+  return { title: cms.title };
+}
+
+export default async function AboutPage() {
+  const cms = await getPageCmsConfig("about");
+
   return (
     <div>
-      <div className="dark-band py-14 text-white">
-        <div className="container">
-          <h1 className="mb-2.5 text-[clamp(30px,5vw,46px)] font-semibold">About Yaclam</h1>
-          <p className="max-w-xl text-[17px] text-white/72">
-            The largest Somali-language learning ecosystem — built to make world-class education accessible in the language learners understand best.
-          </p>
+      {cms.isVisible ? (
+        <div className="dark-band py-14 text-white">
+          <div className="container">
+            <h1 className="mb-2.5 text-[clamp(30px,5vw,46px)] font-semibold">{cms.title}</h1>
+            <p className="max-w-xl text-[17px] text-white/72">{cms.subtitle}</p>
+          </div>
         </div>
-      </div>
+      ) : null}
 
       <section className="section container">
         <div className="grid items-center gap-12 lg:grid-cols-2">
@@ -50,7 +56,7 @@ export default function AboutPage() {
       <section className="section dark-band text-white">
         <div className="container text-center">
           <p className="ar mb-4.5 text-[clamp(24px,4vw,34px)] text-gold">قُلْ هَلْ يَسْتَوِي الَّذِينَ يَعْلَمُونَ وَالَّذِينَ لَا يَعْلَمُونَ</p>
-          <p className="italic text-white/70">“Are those who know equal to those who do not know?”</p>
+          <p className="italic text-white/70">&ldquo;Are those who know equal to those who do not know?&rdquo;</p>
         </div>
       </section>
     </div>

@@ -8,7 +8,7 @@ const steps5 = (a: string, b: string, c: string, d: string, e: string) => [
   { title: "Portfolio & job applications", detail: e },
 ];
 
-export const roadmaps: Roadmap[] = [
+const roadmapSeeds: Omit<Roadmap, "timeline">[] = [
   { id: "data-analyst", title: "Data Analyst", icon: "BarChart3", demand: "Very High", salary: "€38k–€58k", months: 8, skills: ["Excel", "SQL", "Power BI", "Python", "Statistics"], description: "Turn raw data into business decisions. The fastest non-coding entry into tech.", steps: steps5("Spreadsheets, data literacy and basic statistics.", "SQL querying and clean data analysis workflows.", "Power BI / Looker Studio and Python (pandas).", "Build 3–4 dashboards on real datasets.", "Portfolio, CV, PL-300 certification, interviews.") },
   { id: "data-scientist", title: "Data Scientist", icon: "Brain", demand: "High", salary: "€55k–€85k", months: 14, skills: ["Python", "ML", "Statistics", "SQL", "Deep Learning"], description: "Build predictive models and machine-learning systems that drive products.", steps: steps5("Python, maths and statistics.", "Data wrangling, EDA and classical ML.", "scikit-learn, TensorFlow/PyTorch, notebooks.", "End-to-end ML projects with deployment.", "Kaggle, GitHub portfolio, technical interviews.") },
   { id: "fullstack-developer", title: "Full-Stack Developer", icon: "Code2", demand: "Very High", salary: "€45k–€75k", months: 12, skills: ["JavaScript", "React", "Node.js", "Databases", "APIs"], description: "Build complete web applications — front-end to back-end — and ship to production.", steps: steps5("HTML, CSS, JavaScript fundamentals.", "React/Next.js and component design.", "Node.js, databases, REST/GraphQL APIs.", "Ship 2–3 full applications.", "Open-source, portfolio site, interviews.") },
@@ -30,5 +30,10 @@ export const roadmaps: Roadmap[] = [
   { id: "trader", title: "Financial Trader", icon: "LineChart", demand: "Medium", salary: "Variable", months: 6, skills: ["Market Structure", "Risk", "Psychology", "Journaling"], description: "Develop a disciplined, process-driven approach to the markets.", steps: steps5("Markets and instruments.", "Technical and market structure.", "Risk management and journaling.", "Backtest and demo trade.", "Live with strict risk rules.") },
   { id: "online-instructor", title: "Online Instructor", icon: "GraduationCap", demand: "Medium", salary: "Variable", months: 6, skills: ["Curriculum", "Recording", "Editing", "Marketing", "Community"], description: "Turn your expertise into courses and income.", steps: steps5("Pick a niche and validate.", "Design a curriculum.", "Record and edit lessons.", "Launch on a platform like Yaclam.", "Market, grow and build community.") },
 ];
+
+export const roadmaps: Roadmap[] = roadmapSeeds.map((r) => ({
+  ...r,
+  timeline: r.months > 0 ? `${r.months} months` : "—",
+}));
 
 export const getRoadmap = (id: string) => roadmaps.find((r) => r.id === id);

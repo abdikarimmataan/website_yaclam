@@ -2,6 +2,8 @@ export interface SectionText {
   eyebrow?: string;
   title?: string;
   subtitle?: string;
+  /** Cards to show on the home page (backend: cardNumberVisible). */
+  cardNumberVisible?: number;
   isVisible?: boolean;
 }
 

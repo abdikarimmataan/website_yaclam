@@ -1,16 +1,23 @@
 import Link from "next/link";
 import { RoadmapCard } from "@/components/shared/roadmap-card";
 import { Pagination } from "@/components/shared/pagination";
+import { getPageCmsConfig } from "@/lib/api/page-cms.service";
 import { getRoadmapsPage, ROADMAPS_PAGE_SIZE } from "@/lib/api/roadmap.service";
 
-export const metadata = { title: "Career Roadmaps" };
+export async function generateMetadata() {
+  const cms = await getPageCmsConfig("roadmap");
+  return { title: cms.title };
+}
 
 export default async function RoadmapsPage({
   searchParams,
 }: {
   searchParams: Promise<{ page?: string }>;
 }) {
-  const { page: pageParam } = await searchParams;
+  const [{ page: pageParam }, cms] = await Promise.all([
+    searchParams,
+    getPageCmsConfig("roadmap"),
+  ]);
   const requestedPage = Math.max(1, Number(pageParam) || 1);
 
   let result = await getRoadmapsPage(requestedPage, ROADMAPS_PAGE_SIZE);
@@ -18,35 +25,20 @@ export default async function RoadmapsPage({
     result = await getRoadmapsPage(result.pages, ROADMAPS_PAGE_SIZE);
   }
 
-  const { roadmaps, page, pages, rows, pageSize } = result;
-  const start = rows === 0 ? 0 : (page - 1) * pageSize + 1;
-  const end = rows === 0 ? 0 : Math.min(page * pageSize, rows);
+  const { roadmaps, page, pages } = result;
 
   return (
     <div>
-      <div className="dark-band py-14 text-white">
-        <div className="container">
-          <h1 className="mb-2.5 text-[clamp(30px,5vw,46px)] font-semibold">Career Roadmaps</h1>
-          <p className="max-w-xl text-[17px] text-white/72">
-            Pick a destination. We give you the salary outlook, the skills, and a guided sequence to get there.
-          </p>
+      {cms.isVisible ? (
+        <div className="dark-band py-14 text-white">
+          <div className="container">
+            <h1 className="mb-2.5 text-[clamp(30px,5vw,46px)] font-semibold">{cms.title}</h1>
+            <p className="max-w-xl text-[17px] text-white/72">{cms.subtitle}</p>
+          </div>
         </div>
-      </div>
+      ) : null}
 
       <section className="section container">
-        {rows > 0 ? (
-          <p className="mb-8 text-[14px] text-ink-3">
-            Showing <b className="text-navy">{start}</b>–<b className="text-navy">{end}</b> of{" "}
-            <b className="text-navy">{rows}</b> roadmaps
-            {pages > 1 ? (
-              <>
-                {" "}
-                · Page <b className="text-navy">{page}</b> of <b className="text-navy">{pages}</b>
-              </>
-            ) : null}
-          </p>
-        ) : null}
-
         {roadmaps.length > 0 ? (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {roadmaps.map((r) => (
@@ -55,10 +47,7 @@ export default async function RoadmapsPage({
           </div>
         ) : (
           <div className="rounded-2xl border border-line bg-surface px-6 py-14 text-center">
-            <p className="text-[17px] font-semibold text-navy">No roadmaps yet</p>
-            <p className="mt-2 text-[14px] text-ink-3">
-              Published roadmaps from the CMS will appear here.
-            </p>
+            <p className="text-[17px] font-semibold text-navy">{cms.emptyStateText}</p>
             <Link href="/" className="btn btn-outline btn-sm mt-6">
               Back to home
             </Link>

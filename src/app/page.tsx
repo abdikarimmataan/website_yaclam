@@ -14,8 +14,11 @@ import { getHomeRoadmaps } from "@/lib/api/roadmap.service";
 import { getHomeScholarships } from "@/lib/api/scholarship.service";
 import { getHomePractitioners } from "@/lib/api/practitioner.service";
 import { getHomeTestimonials } from "@/lib/api/testimonial.service";
+import { getHomeFeaturedCourses } from "@/lib/api/course.service";
+import { sortBySortOrder } from "@/lib/api/sort-order";
+import { firstParagraph } from "@/lib/utils";
+import { ScholarshipFlag } from "@/components/shared/scholarship-flag";
 import { Icon } from "@/lib/icon-map";
-import { featuredCourses } from "@/lib/data/courses";
 
 type FieldByCourse = {
   _id: string;
@@ -41,29 +44,36 @@ async function getFieldsByCourse(): Promise<FieldByCourse[]> {
   try {
     const data = await api.get<FieldByCourse[]>("/fields/getAllfieldbycourse");
     if (!Array.isArray(data)) return [];
-    return data
-      .filter((f) => f.isVisible !== false)
-      .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+    return sortBySortOrder(data.filter((f) => f.isVisible !== false));
   } catch {
     return [];
   }
 }
 
 export default async function Home() {
-  const [home, homeSections, fields, whyYaclamCards, homeRoadmaps, homeScholarships, homePractitioners, homeTestimonials] =
-    await Promise.all([
+  const [home, homeSections] = await Promise.all([
     getHomeConfig(),
     getHomeSectionsConfig(),
+  ]);
+  const s = sectionsFromConfig(homeSections);
+
+  const [fields, featuredCoursesList, whyYaclamCards, homeRoadmaps, homeScholarships, homePractitioners, homeTestimonials] =
+    await Promise.all([
     getFieldsByCourse(),
+    getHomeFeaturedCourses(s.featured.cardNumberVisible),
     getWhyYaclamCards(),
     getHomeRoadmaps(),
     getHomeScholarships(),
     getHomePractitioners(),
     getHomeTestimonials(),
   ]);
-  const s = sectionsFromConfig(homeSections);
-  const featuredCoursesLimit = home?.featuredCoursesLimit ?? 6;
-  const featuredCoursesList = featuredCourses.slice(0, featuredCoursesLimit);
+
+  const fieldCards = fields.slice(0, s.field.cardNumberVisible);
+  const whyYaclamCardList = whyYaclamCards.slice(0, s.whyYaclam.cardNumberVisible);
+  const roadmapCardList = homeRoadmaps.slice(0, s.roadmaps.cardNumberVisible);
+  const scholarshipCardList = homeScholarships.slice(0, s.scholarships.cardNumberVisible);
+  const practitionerCardList = homePractitioners.slice(0, s.practitioners.cardNumberVisible);
+  const testimonialCardList = homeTestimonials.slice(0, s.testimonials.cardNumberVisible);
 
   return (
     <>
@@ -74,7 +84,7 @@ export default async function Home() {
       <section className="section container">
         <SectionHeading center eyebrow={s.field.eyebrow} title={s.field.title} sub={s.field.subtitle} />
         <div className="mt-12 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-          {fields.map((field) => (
+          {fieldCards.map((field) => (
             <Link key={field._id} href={`/courses?cat=${field.slug}`} className="group rounded-2xl border border-line bg-white p-6 text-center transition-all duration-200 hover:-translate-y-1 hover:border-gold hover:shadow-soft">
               <div className="mx-auto mb-3.5 grid h-[52px] w-[52px] place-items-center rounded-[14px] bg-surface text-royal transition group-hover:bg-navy group-hover:text-gold">
                 <Icon name={resolveFieldIcon(field.icon)} size={24} />
@@ -117,7 +127,7 @@ export default async function Home() {
       <section className="section container">
         <SectionHeading center eyebrow={s.whyYaclam.eyebrow} title={s.whyYaclam.title} sub={s.whyYaclam.subtitle} />
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {whyYaclamCards.map((item) => (
+          {whyYaclamCardList.map((item) => (
             <div key={item.id}>
               <div className="mb-4 grid h-[54px] w-[54px] place-items-center rounded-[14px] bg-surface text-royal">
                 <Icon name={item.icon?.trim() || "BookOpen"} size={26} />
@@ -143,7 +153,7 @@ export default async function Home() {
             ) : null}
           </div>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {homeRoadmaps.map((r) => <RoadmapCard key={r.id} r={r} />)}
+            {roadmapCardList.map((r) => <RoadmapCard key={r.id} r={r} />)}
           </div>
         </div>
       </section>
@@ -162,16 +172,27 @@ export default async function Home() {
             ) : null}
           </div>
           <div className="grid gap-4 md:grid-cols-2">
-            {homeScholarships.map((item) => (
-              <Link key={String(item.id)} href={`/scholarships/${item.slug}`} className="flex items-center gap-4 rounded-[14px] border border-white/15 bg-white/[0.06] p-[18px] transition hover:translate-x-1 hover:border-gold hover:bg-white/10">
-                <span className="text-[30px]">{item.flag}</span>
-                <div className="flex-1">
+            {scholarshipCardList.map((item) => {
+              const excerpt = firstParagraph(item.overview);
+              return (
+              <Link key={String(item.id)} href={`/scholarships/${item.slug}`} className="flex items-start gap-4 rounded-[14px] border border-white/15 bg-white/[0.06] p-[18px] transition hover:translate-x-1 hover:border-gold hover:bg-white/10">
+                <ScholarshipFlag
+                  flag={item.flag}
+                  name={item.name}
+                  className="text-[30px] leading-none"
+                  imageClassName="h-9 w-12 shrink-0"
+                />
+                <div className="min-w-0 flex-1">
                   <div className="font-bold">{item.name}</div>
                   <div className="mt-0.5 text-[13px] text-white/60">{item.country} · {item.level} · {item.deadline}</div>
+                  {excerpt ? (
+                    <p className="mt-2 line-clamp-3 text-[13px] leading-relaxed text-white/70">{excerpt}</p>
+                  ) : null}
                 </div>
-                <span className="whitespace-nowrap rounded-md bg-gold px-2.5 py-1 text-[11px] font-extrabold text-navy">{item.funding}</span>
+                <span className="shrink-0 whitespace-nowrap rounded-md bg-gold px-2.5 py-1 text-[11px] font-extrabold text-navy">{item.funding}</span>
               </Link>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
@@ -182,7 +203,7 @@ export default async function Home() {
       <section className="section container">
         <SectionHeading center eyebrow={s.practitioners.eyebrow} title={s.practitioners.title} sub={s.practitioners.subtitle} />
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {homePractitioners.map((i) => (
+          {practitionerCardList.map((i) => (
             <div key={i.id} className="rounded-2xl border border-line bg-white p-7 text-center transition hover:-translate-y-1 hover:shadow-soft">
               <div className="mx-auto mb-3.5 grid h-[72px] w-[72px] place-items-center rounded-full font-display text-2xl font-extrabold text-white" style={{ background: `linear-gradient(135deg, ${i.color}, #0D1B4B)` }}>{i.initials}</div>
               <h3 className="font-sans text-[17px] font-bold text-navy">{i.name}</h3>
@@ -203,7 +224,7 @@ export default async function Home() {
         <div className="container">
           <SectionHeading center eyebrow={s.testimonials.eyebrow} title={s.testimonials.title} sub={s.testimonials.subtitle} />
           <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {homeTestimonials.map((t) => (
+            {testimonialCardList.map((t) => (
               <div key={t.id ?? t.name} className="rounded-2xl border border-line bg-white p-8">
                 <Quote className="mb-3.5 text-gold" size={30} />
                 <p className="mb-5 text-[15.5px] leading-relaxed text-ink-2">{t.text}</p>

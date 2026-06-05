@@ -10,6 +10,14 @@ import type {
 
 type SectionFallback = { eyebrow: string; title: string; subtitle: string };
 
+export const DEFAULT_SECTION_CARD_COUNT = 5;
+
+export function sectionCardLimit(value?: number, fallback = DEFAULT_SECTION_CARD_COUNT): number {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n < 0) return fallback;
+  return Math.floor(n);
+}
+
 export const SECTION_FALLBACKS = {
   field: {
     eyebrow: "Browse",
@@ -65,13 +73,14 @@ const CTA_FALLBACK: CtaSection = {
 
 function sectionText(section: SectionText | undefined, fallback: SectionFallback) {
   if (!section) {
-    return { isVisible: true, ...fallback };
+    return { isVisible: true, cardNumberVisible: DEFAULT_SECTION_CARD_COUNT, ...fallback };
   }
   return {
     isVisible: section.isVisible !== false,
     eyebrow: section.eyebrow ?? fallback.eyebrow,
     title: section.title ?? fallback.title,
     subtitle: section.subtitle ?? fallback.subtitle,
+    cardNumberVisible: sectionCardLimit(section.cardNumberVisible),
   };
 }
 

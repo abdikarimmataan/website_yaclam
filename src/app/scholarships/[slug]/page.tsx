@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import {
   ChevronRight, ExternalLink, Calendar, MapPin, CheckCircle2, FileText, GraduationCap,
 } from "lucide-react";
+import { ScholarshipFlag } from "@/components/shared/scholarship-flag";
 import {
   getScholarshipDetail,
   scholarshipExternalUrl,
@@ -31,7 +32,7 @@ export default async function ScholarshipDetail({ params }: { params: Promise<{ 
             <ChevronRight size={13} /> <span>{s.name}</span>
           </div>
           <div className="flex items-start gap-5">
-            <span className="text-[56px] leading-none">{s.flag}</span>
+            <ScholarshipFlag flag={s.flag} name={s.name} className="text-[56px] leading-none" imageClassName="h-14 w-20" />
             <div>
               <span className={`inline-flex rounded-md px-2.5 py-1 text-[11.5px] font-bold uppercase tracking-wide ${s.funding === "Full" ? "bg-success text-white" : "bg-gold text-navy"}`}>{s.funding} Funding</span>
               <h1 className="mt-3 text-[clamp(28px,4vw,42px)] font-semibold">{s.name}</h1>

@@ -1,4 +1,5 @@
 import { api } from "@/api/http";
+import { sortBySortOrder } from "@/lib/api/sort-order";
 import type { Instructor } from "@/lib/types";
 import type {
   PaginatedPractitioners,
@@ -6,8 +7,6 @@ import type {
 } from "@/lib/api/practitioner.types";
 
 const BASE = "/practitioner";
-
-export const HOME_PRACTITIONERS_COUNT = 4;
 
 export type PractitionerListParams = {
   page?: number;
@@ -23,20 +22,6 @@ function deriveInitials(name: string): string {
 
 function visiblePractitioners(rows: PractitionerApiRecord[]) {
   return rows.filter((p) => p.isVisible !== false);
-}
-
-function practitionerTimestamp(record: PractitionerApiRecord): number {
-  const raw = record.updated_at ?? record.created_at;
-  const time = raw ? new Date(String(raw)).getTime() : 0;
-  return Number.isFinite(time) ? time : 0;
-}
-
-export function sortPractitionersByLatest(rows: PractitionerApiRecord[]): PractitionerApiRecord[] {
-  return [...rows].sort((a, b) => {
-    const byTime = practitionerTimestamp(b) - practitionerTimestamp(a);
-    if (byTime !== 0) return byTime;
-    return Number(b.sortOrder ?? 0) - Number(a.sortOrder ?? 0);
-  });
 }
 
 export function toPractitioner(record: PractitionerApiRecord): Instructor {
@@ -66,14 +51,12 @@ export async function getAllPractitioners(
   return api.get<PaginatedPractitioners>(`${BASE}/getAll?${q}`, { signal: opts?.signal });
 }
 
-/** Four most recently saved visible practitioners for the home section. */
+/** Visible practitioners for the home section, ordered by sortOrder. */
 export async function getHomePractitioners(): Promise<Instructor[]> {
   try {
     const res = await getAllPractitioners({ page: 1, pageSize: 100 });
     if (!Array.isArray(res.data)) return [];
-    return sortPractitionersByLatest(visiblePractitioners(res.data))
-      .slice(0, HOME_PRACTITIONERS_COUNT)
-      .map(toPractitioner);
+    return sortBySortOrder(visiblePractitioners(res.data)).map(toPractitioner);
   } catch {
     return [];
   }

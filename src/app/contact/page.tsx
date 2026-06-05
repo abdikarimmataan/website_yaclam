@@ -1,18 +1,24 @@
 import { Mail, Phone, MapPin, Send } from "lucide-react";
+import { getPageCmsConfig } from "@/lib/api/page-cms.service";
 
-export const metadata = { title: "Contact" };
+export async function generateMetadata() {
+  const cms = await getPageCmsConfig("contact");
+  return { title: cms.title };
+}
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  const cms = await getPageCmsConfig("contact");
+
   return (
     <div>
-      <div className="dark-band py-14 text-white">
-        <div className="container">
-          <h1 className="mb-2.5 text-[clamp(30px,5vw,46px)] font-semibold">Get in touch</h1>
-          <p className="max-w-xl text-[17px] text-white/72">
-            Questions about courses, scholarships or partnerships? We&apos;d love to hear from you.
-          </p>
+      {cms.isVisible ? (
+        <div className="dark-band py-14 text-white">
+          <div className="container">
+            <h1 className="mb-2.5 text-[clamp(30px,5vw,46px)] font-semibold">{cms.title}</h1>
+            <p className="max-w-xl text-[17px] text-white/72">{cms.subtitle}</p>
+          </div>
         </div>
-      </div>
+      ) : null}
 
       <section className="section container">
         <div className="grid gap-12 lg:grid-cols-[1fr_1.4fr]">

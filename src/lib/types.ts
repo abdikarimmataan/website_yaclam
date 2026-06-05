@@ -19,7 +19,7 @@ export interface Instructor {
 }
 
 export interface Course {
-  id: number;
+  id: string | number;
   slug: string;
   title: string;
   category: string;
@@ -79,6 +79,7 @@ export interface Roadmap {
   demand: "Very High" | "High" | "Medium";
   salary: string;
   months: number;
+  timeline: string;
   skills: string[];
   description: string;
   steps: { title: string; detail: string }[];
