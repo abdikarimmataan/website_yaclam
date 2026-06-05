@@ -1,7 +1,5 @@
 import Link from "next/link";
-import {
-  ArrowRight, Globe, Award, Target, GraduationCap, Quote, ShieldCheck,
-} from "lucide-react";
+import { ArrowRight, Quote, ShieldCheck } from "lucide-react";
 import { Hero } from "@/components/home/hero";
 import { getHomeConfig } from "@/lib/api/home.service";
 import { getHomeSectionsConfig } from "@/lib/api/home-sections.service";
@@ -10,23 +8,59 @@ import { sectionsFromConfig } from "@/lib/api/home-sections.defaults";
 import { SectionHeading } from "@/components/shared/section-heading";
 import { CourseCard } from "@/components/shared/course-card";
 import { RoadmapCard } from "@/components/shared/roadmap-card";
+import { api } from "@/api/http";
+import { getWhyYaclamCards } from "@/lib/api/why-yaclam.service";
+import { getHomeRoadmaps } from "@/lib/api/roadmap.service";
+import { getHomeScholarships } from "@/lib/api/scholarship.service";
+import { getHomePractitioners } from "@/lib/api/practitioner.service";
+import { getHomeTestimonials } from "@/lib/api/testimonial.service";
 import { Icon } from "@/lib/icon-map";
-import { categories } from "@/lib/data/categories";
 import { featuredCourses } from "@/lib/data/courses";
-import { roadmaps } from "@/lib/data/roadmaps";
-import { scholarships } from "@/lib/data/scholarships";
-import { instructors } from "@/lib/data/instructors";
-import { testimonials } from "@/lib/data/testimonials";
 
-const why = [
-  { icon: Globe, t: "Learn in Somali", d: "Complex skills explained in your mother tongue, with English technical terms — the way you actually understand best." },
-  { icon: Award, t: "Verified Certificates", d: "Earn shareable certificates with QR verification to prove your skills to employers." },
-  { icon: Target, t: "Career Roadmaps", d: "Clear, step-by-step paths from beginner to hired — no more guessing what to learn next." },
-  { icon: GraduationCap, t: "Scholarship Access", d: "A live database of funded opportunities plus masterclasses on how to win them." },
-];
+type FieldByCourse = {
+  _id: string;
+  name: string;
+  slug: string;
+  icon: string;
+  sortOrder: number;
+  isVisible?: boolean;
+  courseCount: number;
+};
+
+const FIELD_ICON_ALIASES: Record<string, string> = {
+  "chart-bar": "BarChart3",
+};
+
+function resolveFieldIcon(icon: string) {
+  const key = icon?.trim();
+  if (!key) return "BookOpen";
+  return FIELD_ICON_ALIASES[key] ?? key;
+}
+
+async function getFieldsByCourse(): Promise<FieldByCourse[]> {
+  try {
+    const data = await api.get<FieldByCourse[]>("/fields/getAllfieldbycourse");
+    if (!Array.isArray(data)) return [];
+    return data
+      .filter((f) => f.isVisible !== false)
+      .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+  } catch {
+    return [];
+  }
+}
 
 export default async function Home() {
-  const [home, homeSections] = await Promise.all([getHomeConfig(), getHomeSectionsConfig()]);
+  const [home, homeSections, fields, whyYaclamCards, homeRoadmaps, homeScholarships, homePractitioners, homeTestimonials] =
+    await Promise.all([
+    getHomeConfig(),
+    getHomeSectionsConfig(),
+    getFieldsByCourse(),
+    getWhyYaclamCards(),
+    getHomeRoadmaps(),
+    getHomeScholarships(),
+    getHomePractitioners(),
+    getHomeTestimonials(),
+  ]);
   const s = sectionsFromConfig(homeSections);
   const featuredCoursesLimit = home?.featuredCoursesLimit ?? 6;
   const featuredCoursesList = featuredCourses.slice(0, featuredCoursesLimit);
@@ -40,13 +74,13 @@ export default async function Home() {
       <section className="section container">
         <SectionHeading center eyebrow={s.field.eyebrow} title={s.field.title} sub={s.field.subtitle} />
         <div className="mt-12 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-          {categories.map((cat) => (
-            <Link key={cat.id} href={`/courses?cat=${cat.id}`} className="group rounded-2xl border border-line bg-white p-6 text-center transition-all duration-200 hover:-translate-y-1 hover:border-gold hover:shadow-soft">
+          {fields.map((field) => (
+            <Link key={field._id} href={`/courses?cat=${field.slug}`} className="group rounded-2xl border border-line bg-white p-6 text-center transition-all duration-200 hover:-translate-y-1 hover:border-gold hover:shadow-soft">
               <div className="mx-auto mb-3.5 grid h-[52px] w-[52px] place-items-center rounded-[14px] bg-surface text-royal transition group-hover:bg-navy group-hover:text-gold">
-                <Icon name={cat.icon} size={24} />
+                <Icon name={resolveFieldIcon(field.icon)} size={24} />
               </div>
-              <div className="text-[14.5px] font-bold text-navy">{cat.name}</div>
-              <div className="mt-1 text-[12.5px] text-ink-3">{cat.count} courses</div>
+              <div className="text-[14.5px] font-bold text-navy">{field.name}</div>
+              <div className="mt-1 text-[12.5px] text-ink-3">{field.courseCount} courses</div>
             </Link>
           ))}
         </div>
@@ -83,11 +117,13 @@ export default async function Home() {
       <section className="section container">
         <SectionHeading center eyebrow={s.whyYaclam.eyebrow} title={s.whyYaclam.title} sub={s.whyYaclam.subtitle} />
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {why.map((f) => (
-            <div key={f.t}>
-              <div className="mb-4 grid h-[54px] w-[54px] place-items-center rounded-[14px] bg-surface text-royal"><f.icon size={26} /></div>
-              <h3 className="mb-2 font-sans text-lg font-bold text-navy">{f.t}</h3>
-              <p className="text-[14.5px] text-ink-3">{f.d}</p>
+          {whyYaclamCards.map((item) => (
+            <div key={item.id}>
+              <div className="mb-4 grid h-[54px] w-[54px] place-items-center rounded-[14px] bg-surface text-royal">
+                <Icon name={item.icon?.trim() || "BookOpen"} size={26} />
+              </div>
+              <h3 className="mb-2 font-sans text-lg font-bold text-navy">{item.title}</h3>
+              <p className="text-[14.5px] text-ink-3">{item.description}</p>
             </div>
           ))}
         </div>
@@ -107,7 +143,7 @@ export default async function Home() {
             ) : null}
           </div>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {roadmaps.slice(0, 4).map((r) => <RoadmapCard key={r.id} r={r} />)}
+            {homeRoadmaps.map((r) => <RoadmapCard key={r.id} r={r} />)}
           </div>
         </div>
       </section>
@@ -126,8 +162,8 @@ export default async function Home() {
             ) : null}
           </div>
           <div className="grid gap-4 md:grid-cols-2">
-            {scholarships.slice(0, 6).map((item) => (
-              <Link key={item.id} href={`/scholarships/${item.slug}`} className="flex items-center gap-4 rounded-[14px] border border-white/15 bg-white/[0.06] p-[18px] transition hover:translate-x-1 hover:border-gold hover:bg-white/10">
+            {homeScholarships.map((item) => (
+              <Link key={String(item.id)} href={`/scholarships/${item.slug}`} className="flex items-center gap-4 rounded-[14px] border border-white/15 bg-white/[0.06] p-[18px] transition hover:translate-x-1 hover:border-gold hover:bg-white/10">
                 <span className="text-[30px]">{item.flag}</span>
                 <div className="flex-1">
                   <div className="font-bold">{item.name}</div>
@@ -146,7 +182,7 @@ export default async function Home() {
       <section className="section container">
         <SectionHeading center eyebrow={s.practitioners.eyebrow} title={s.practitioners.title} sub={s.practitioners.subtitle} />
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {instructors.slice(0, 4).map((i) => (
+          {homePractitioners.map((i) => (
             <div key={i.id} className="rounded-2xl border border-line bg-white p-7 text-center transition hover:-translate-y-1 hover:shadow-soft">
               <div className="mx-auto mb-3.5 grid h-[72px] w-[72px] place-items-center rounded-full font-display text-2xl font-extrabold text-white" style={{ background: `linear-gradient(135deg, ${i.color}, #0D1B4B)` }}>{i.initials}</div>
               <h3 className="font-sans text-[17px] font-bold text-navy">{i.name}</h3>
@@ -166,9 +202,9 @@ export default async function Home() {
       <section className="section bg-surface">
         <div className="container">
           <SectionHeading center eyebrow={s.testimonials.eyebrow} title={s.testimonials.title} sub={s.testimonials.subtitle} />
-          <div className="mt-12 grid gap-6 md:grid-cols-3">
-            {testimonials.slice(0, 3).map((t) => (
-              <div key={t.name} className="rounded-2xl border border-line bg-white p-8">
+          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {homeTestimonials.map((t) => (
+              <div key={t.id ?? t.name} className="rounded-2xl border border-line bg-white p-8">
                 <Quote className="mb-3.5 text-gold" size={30} />
                 <p className="mb-5 text-[15.5px] leading-relaxed text-ink-2">{t.text}</p>
                 <div className="flex items-center gap-3">
