@@ -129,3 +129,68 @@
 /* scrollbar */
 .dark ::-webkit-scrollbar-thumb { background: #2a3760; }
 .dark ::-webkit-scrollbar-thumb:hover { background: #3a4a80; }
+
+/* Instructor portal — always dark, no light/white surfaces */
+.instructor-shell {
+  background-color: #070f2e;
+}
+.instructor-main {
+  background-color: #0a1540;
+  color: #c7d0e0;
+}
+.instructor-shell h1,
+.instructor-shell h2,
+.instructor-shell h3,
+.instructor-shell h4 {
+  color: #e8ecf8;
+}
+.instructor-shell .text-navy {
+  color: #e8ecf8 !important;
+}
+.instructor-shell .text-ink-3 {
+  color: #8b97b0 !important;
+}
+.instructor-shell .instructor-card {
+  background-color: #0f1631;
+  border-color: #1f2a4a;
+}
+.instructor-shell .instructor-card:hover {
+  border-color: #2a3760;
+}
+.instructor-shell .btn-outline {
+  background-color: #0f1631;
+  color: #e8ecf8;
+  border-color: #2a3760;
+}
+.instructor-shell .btn-outline:hover {
+  border-color: #c9a84c;
+  color: #c9a84c;
+}
+.instructor-shell .instructor-thumb {
+  position: relative;
+  overflow: hidden;
+}
+.instructor-shell .bg-white {
+  background-color: #0f1631 !important;
+  border-color: #1f2a4a;
+}
+.instructor-shell .border-line {
+  border-color: #1f2a4a !important;
+}
+.instructor-shell .bg-surface {
+  background-color: #131b39 !important;
+}
+.instructor-shell .bg-surface-2 {
+  background-color: #1a2344 !important;
+}
+
+@media (max-width: 639px) {
+  .instructor-shell .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  .instructor-shell .btn.btn-sm,
+  .instructor-shell .btn.w-fit {
+    width: auto;
+  }
+}

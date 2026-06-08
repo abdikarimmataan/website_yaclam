@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans, Fraunces, Amiri } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/layout/navbar";
 import { FooterLoader } from "@/components/layout/footer-loader";
+import { AppToaster } from "@/components/shared/app-toaster";
 
 const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "700", "800"], variable: "--font-jakarta", display: "swap" });
 const fraunces = Fraunces({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--font-fraunces", display: "swap" });
@@ -35,6 +36,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body>
+        <AppToaster />
         <Navbar />
         <main>{children}</main>
         <FooterLoader />

@@ -15,12 +15,12 @@ export default function InstructorOverview() {
   ];
   return (
     <div>
-      <div className="mb-7 flex flex-wrap items-center justify-between gap-4">
+      <div className="mb-6 flex flex-col gap-4 sm:mb-7 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-[28px] font-bold text-navy">Instructor Overview</h1>
-          <p className="text-ink-3">Welcome back, Abdikarim. Here&apos;s how your courses are doing.</p>
+          <h1 className="text-2xl font-bold text-navy sm:text-[28px]">Instructor Overview</h1>
+          <p className="text-sm text-ink-3 sm:text-base">Welcome back, Abdikarim. Here&apos;s how your courses are doing.</p>
         </div>
-        <Link href="/instructor/courses" className="btn btn-gold"><Plus size={17} /> New course</Link>
+        <Link href="/instructor/courses?create=1" className="btn btn-gold"><Plus size={17} /> New course</Link>
       </div>
 
       <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">

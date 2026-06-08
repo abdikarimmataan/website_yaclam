@@ -48,7 +48,7 @@ export function CoursePlayer({ course, modules }: { course: Course; modules: Mod
       {/* MAIN: video + details + comments */}
       <main className="order-2 lg:order-1">
         <div className="bg-navy-deep px-4 py-4 sm:px-8 sm:py-6">
-          <VimeoPlayer vimeoId={active.vimeoId} title={active.title} />
+          <VimeoPlayer vimeoId={active.vimeoId ?? ""} title={active.title} />
         </div>
 
         <div className="container max-w-none px-4 py-6 sm:px-8">

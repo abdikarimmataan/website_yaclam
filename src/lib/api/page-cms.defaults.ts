@@ -34,7 +34,8 @@ export const PAGE_CMS_FALLBACKS: Record<PageCmsKey, PageCmsFallback> = {
   },
   contact: {
     title: "Get in touch",
-    subtitle: "Questions about courses, scholarships or partnerships? We'd love to hear from you.",
+    subtitle:
+      "Questions about courses, scholarships or partnerships? We'd love to hear from you.",
     emptyStateText: "",
   },
 };

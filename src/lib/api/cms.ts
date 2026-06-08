@@ -9,7 +9,7 @@ export function uploadUrl(path: string | undefined): string | null {
   const trimmed = path?.trim();
   if (!trimmed) return null;
   if (/^https?:\/\//i.test(trimmed)) return trimmed;
-  if (trimmed.startsWith("/uploads/")) return `${apiOrigin()}${trimmed}`;
+  if (trimmed.startsWith("/")) return `${apiOrigin()}${trimmed}`;
   return null;
 }
 

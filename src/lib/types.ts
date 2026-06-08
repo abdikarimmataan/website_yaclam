@@ -23,7 +23,11 @@ export interface Course {
   slug: string;
   title: string;
   category: string;
+  categoryIcon?: string;
   instructor: string;
+  instructorRole?: string;
+  instructorBio?: string;
+  instructorAvatar?: string;
   level: Level;
   rating: number;
   reviews: number;
@@ -36,17 +40,21 @@ export interface Course {
   badge?: string;
   color: string;
   description: string;
+  overviewHeadline?: string;
   outcomes: string[];
   language: string;
   expiry: string;
   certificate: boolean;
+  thumbnail?: string;
+  previewVideoUrl?: string;
 }
 
 export interface Lesson {
   id: string;
   title: string;
   duration: string; // e.g. "08:24"
-  vimeoId: string;
+  vimeoId?: string;
+  videoUrl?: string;
   free?: boolean;
 }
 
@@ -86,16 +94,18 @@ export interface Roadmap {
 }
 
 export interface BlogPost {
-  id: number;
+  id: string;
   slug: string;
   title: string;
   category: string;
+  categoryId?: string;
   author: string;
   date: string;
   readTime: number;
   excerpt: string;
   body: string[];
   color: string;
+  coverImage?: string;
 }
 
 export interface Testimonial {

@@ -1,8 +1,10 @@
 import { api } from "@/api/http";
 import { sortBySortOrder } from "@/lib/api/sort-order";
-import type { Course, Level } from "@/lib/types";
+import type { Course, Level, Module } from "@/lib/types";
 import type {
   CourseApiRecord,
+  CourseDetail,
+  CourseModuleApiRecord,
   CoursesPageResult,
   PaginatedCourses,
 } from "@/lib/api/course.types";
@@ -10,6 +12,7 @@ import type {
 const BASE = "/course";
 
 export const COURSES_PAGE_SIZE = 9;
+export const HOME_LATEST_COURSES = 6;
 
 export type CourseListParams = {
   page?: number;
@@ -30,19 +33,83 @@ function visibleCourses(rows: CourseApiRecord[]) {
   );
 }
 
+function courseTimestamp(record: CourseApiRecord): number {
+  const raw = record.updated_at ?? record.created_at;
+  const time = raw ? new Date(String(raw)).getTime() : 0;
+  return Number.isFinite(time) ? time : 0;
+}
+
+/** Latest saved first — used on the home section. */
+export function sortCoursesByLatest(rows: CourseApiRecord[]): CourseApiRecord[] {
+  return [...rows].sort((a, b) => {
+    const byTime = courseTimestamp(b) - courseTimestamp(a);
+    if (byTime !== 0) return byTime;
+    return Number(b.sortOrder ?? 0) - Number(a.sortOrder ?? 0);
+  });
+}
+
+function resolveFieldMeta(record: CourseApiRecord) {
+  const field = record.fieldId;
+  if (field && typeof field === "object") {
+    return {
+      category: field.name?.trim() || record.category?.trim() || "general",
+      categoryIcon: field.icon?.trim() || undefined,
+    };
+  }
+  return {
+    category: record.category?.trim() || "general",
+    categoryIcon: undefined,
+  };
+}
+
+function extractPreviewVideoUrl(record: CourseApiRecord): string | undefined {
+  for (const mod of record.curriculum ?? []) {
+    for (const lesson of mod.lessons ?? []) {
+      const url = lesson.videoUrl?.trim();
+      if (url) return url;
+    }
+  }
+  return undefined;
+}
+
+function toModules(curriculum: CourseModuleApiRecord[] | undefined): Module[] {
+  return (curriculum ?? [])
+    .filter((module) => module.isVisible !== false)
+    .sort((a, b) => Number(a.sortOrder ?? 0) - Number(b.sortOrder ?? 0))
+    .map((module, moduleIndex) => ({
+      title: module.title?.trim() || `Module ${moduleIndex + 1}`,
+      lessons: (module.lessons ?? [])
+        .filter((lesson) => lesson.isVisible !== false)
+        .sort((a, b) => Number(a.sortOrder ?? 0) - Number(b.sortOrder ?? 0))
+        .map((lesson, lessonIndex) => ({
+          id: String(lesson.id ?? `${moduleIndex}-${lessonIndex}`),
+          title: lesson.title?.trim() || "Untitled lesson",
+          duration: lesson.duration?.trim() || "",
+          vimeoId: lesson.vimeoId?.trim() || "",
+          videoUrl: lesson.videoUrl?.trim() || "",
+          free: lesson.free === true,
+        })),
+    }));
+}
+
 export function toCourse(record: CourseApiRecord): Course {
   const instructor =
     record.instructorName?.trim() || record.instructor?.name?.trim() || "Instructor";
   const hours = Number(record.durationHours ?? record.details?.durationHours) || 0;
   const lessons = Number(record.lessonCount ?? record.details?.lessonCount) || 0;
   const isFree = record.isFree === true;
+  const { category, categoryIcon } = resolveFieldMeta(record);
 
   return {
     id: record.id,
     slug: record.id,
     title: record.title?.trim() || "Course",
-    category: record.category?.trim() || "general",
+    category,
+    categoryIcon,
     instructor,
+    instructorRole: record.instructor?.role?.trim() || undefined,
+    instructorBio: record.instructor?.bio?.trim() || undefined,
+    instructorAvatar: record.instructor?.avatar?.trim() || undefined,
     level: normalizeLevel(record.level || record.details?.skillLevel),
     rating: Number(record.rating) || 0,
     reviews: Number(record.reviewCount) || 0,
@@ -61,12 +128,22 @@ export function toCourse(record: CourseApiRecord): Course {
       record.shortDescription?.trim() ||
       record.overview?.description?.trim() ||
       "",
+    overviewHeadline: record.overview?.headline?.trim() || undefined,
     outcomes: Array.isArray(record.overview?.outcomes)
       ? record.overview!.outcomes!.filter(Boolean)
       : [],
     language: record.language?.trim() || record.details?.language || "Somali",
     expiry: record.access?.trim() || record.details?.access || "1 Year",
     certificate: record.certificate ?? record.details?.certificate ?? true,
+    thumbnail: record.thumbnail?.trim() || undefined,
+    previewVideoUrl: extractPreviewVideoUrl(record),
+  };
+}
+
+function toCourseDetail(record: CourseApiRecord): CourseDetail {
+  return {
+    course: toCourse(record),
+    modules: toModules(record.curriculum),
   };
 }
 
@@ -91,7 +168,22 @@ const EMPTY_COURSES_PAGE: CoursesPageResult = {
   pageSize: COURSES_PAGE_SIZE,
 };
 
-/** Featured published courses for the home section, ordered by sortOrder. */
+/** Latest published courses for the home section. */
+export async function getHomeLatestCourses(
+  limit = HOME_LATEST_COURSES
+): Promise<Course[]> {
+  try {
+    const res = await getAllCourses({ page: 1, pageSize: 500 });
+    if (!Array.isArray(res.data)) return [];
+    return sortCoursesByLatest(visibleCourses(res.data))
+      .slice(0, Math.max(0, limit))
+      .map(toCourse);
+  } catch {
+    return [];
+  }
+}
+
+/** Featured published courses, ordered by sortOrder. */
 export async function getHomeFeaturedCourses(limit = 5): Promise<Course[]> {
   try {
     const res = await getAllCourses({ page: 1, pageSize: 100, isFeatured: true });
@@ -123,5 +215,22 @@ export async function getCoursesPage(
     };
   } catch {
     return EMPTY_COURSES_PAGE;
+  }
+}
+
+export async function getCourseDetail(id: string): Promise<CourseDetail | null> {
+  try {
+    const record = await api.get<CourseApiRecord>(`${BASE}/getById/${id}`);
+    if (
+      !record?.id ||
+      record.isVisible === false ||
+      record.isPublished === false ||
+      record.status === false
+    ) {
+      return null;
+    }
+    return toCourseDetail(record);
+  } catch {
+    return null;
   }
 }

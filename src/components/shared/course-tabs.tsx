@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ChevronDown, Play, Lock, Star, CheckCircle2 } from "lucide-react";
 import type { Course, Module } from "@/lib/types";
+import { uploadUrl } from "@/lib/api/cms";
 import { cn } from "@/lib/utils";
 
 const TABS = ["Overview", "Curriculum", "Details", "Instructor", "Reviews"] as const;
@@ -18,6 +19,11 @@ export function CourseTabs({ course, modules }: { course: Course; modules: Modul
   const [tab, setTab] = useState<Tab>("Overview");
   const [open, setOpen] = useState(0);
   const initials = course.instructor.split(" ").map((w) => w[0]).slice(0, 2).join("");
+  const instructorAvatarSrc = uploadUrl(course.instructorAvatar);
+  const overviewHeadline = course.overviewHeadline?.trim() || "Build smarter, not harder";
+  const instructorBio =
+    course.instructorBio?.trim() ||
+    "Practitioner-instructor with years of real-world experience, teaching the exact skills employers test for — explained in Somali with English technical terms.";
 
   return (
     <div>
@@ -38,20 +44,27 @@ export function CourseTabs({ course, modules }: { course: Course; modules: Modul
 
       {tab === "Overview" && (
         <div>
-          <h2 className="mb-4 text-[24px] font-semibold text-navy">Build smarter, not harder</h2>
+          <h2 className="mb-4 text-[24px] font-semibold text-navy">{overviewHeadline}</h2>
           <p className="mb-4 text-[16px] leading-[1.8] text-ink-2">{course.description}</p>
-          <h3 className="mb-3 mt-7 text-[19px] font-bold text-navy">What you&apos;ll master</h3>
-          <ul className="grid gap-3 sm:grid-cols-2">
-            {course.outcomes.map((o) => (
-              <li key={o} className="flex gap-2.5 text-[15px] text-ink-2"><CheckCircle2 size={18} className="mt-0.5 shrink-0 text-royal" /> {o}</li>
-            ))}
-          </ul>
+          {course.outcomes.length > 0 ? (
+            <>
+              <h3 className="mb-3 mt-7 text-[19px] font-bold text-navy">What you&apos;ll master</h3>
+              <ul className="grid gap-3 sm:grid-cols-2">
+                {course.outcomes.map((o) => (
+                  <li key={o} className="flex gap-2.5 text-[15px] text-ink-2"><CheckCircle2 size={18} className="mt-0.5 shrink-0 text-royal" /> {o}</li>
+                ))}
+              </ul>
+            </>
+          ) : null}
         </div>
       )}
 
       {tab === "Curriculum" && (
         <div className="overflow-hidden rounded-2xl border border-line">
-          {modules.map((m, i) => (
+          {modules.length === 0 ? (
+            <div className="px-5 py-8 text-center text-sm text-ink-3">No curriculum published yet.</div>
+          ) : (
+            modules.map((m, i) => (
             <div key={m.title} className="border-b border-surface-2 last:border-b-0">
               <button onClick={() => setOpen(open === i ? -1 : i)} className="flex w-full items-center justify-between bg-surface px-5 py-4 text-left font-semibold text-navy">
                 <span>{m.title} · {m.lessons.length} lessons</span>
@@ -71,7 +84,8 @@ export function CourseTabs({ course, modules }: { course: Course; modules: Modul
                 </div>
               )}
             </div>
-          ))}
+            ))
+          )}
         </div>
       )}
 
@@ -81,7 +95,7 @@ export function CourseTabs({ course, modules }: { course: Course; modules: Modul
             ["Skill level", course.level],
             ["Language", course.language],
             ["Lessons", `${course.lessons}`],
-            ["Duration", `${course.hours} hours`],
+            ["Duration", course.hours ? `${course.hours} hours` : "—"],
             ["Certificate", course.certificate ? "Yes" : "No"],
             ["Access", course.expiry],
           ].map(([k, v]) => (
@@ -94,10 +108,22 @@ export function CourseTabs({ course, modules }: { course: Course; modules: Modul
 
       {tab === "Instructor" && (
         <div className="flex items-start gap-5 rounded-2xl border border-line bg-white p-6">
-          <div className="grid h-[72px] w-[72px] shrink-0 place-items-center rounded-full font-display text-2xl font-extrabold text-white" style={{ background: `linear-gradient(135deg, ${course.color}, #0D1B4B)` }}>{initials}</div>
+          {instructorAvatarSrc ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={instructorAvatarSrc}
+              alt={course.instructor}
+              className="h-[72px] w-[72px] shrink-0 rounded-full object-cover"
+            />
+          ) : (
+            <div className="grid h-[72px] w-[72px] shrink-0 place-items-center rounded-full font-display text-2xl font-extrabold text-white" style={{ background: `linear-gradient(135deg, ${course.color}, #0D1B4B)` }}>{initials}</div>
+          )}
           <div>
             <h3 className="font-sans text-lg font-bold text-navy">{course.instructor}</h3>
-            <p className="mt-1 text-[14.5px] text-ink-3">Practitioner-instructor with years of real-world experience, teaching the exact skills employers test for — explained in Somali with English technical terms.</p>
+            {course.instructorRole ? (
+              <p className="mt-0.5 text-sm font-medium text-royal">{course.instructorRole}</p>
+            ) : null}
+            <p className="mt-2 text-[14.5px] text-ink-3">{instructorBio}</p>
           </div>
         </div>
       )}
