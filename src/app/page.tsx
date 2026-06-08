@@ -14,7 +14,7 @@ import { getHomeRoadmaps } from "@/lib/api/roadmap.service";
 import { getHomeScholarships } from "@/lib/api/scholarship.service";
 import { getHomePractitioners } from "@/lib/api/practitioner.service";
 import { getHomeTestimonials } from "@/lib/api/testimonial.service";
-import { getHomeFeaturedCourses } from "@/lib/api/course.service";
+import { getHomeLatestCourses, HOME_LATEST_COURSES } from "@/lib/api/course.service";
 import { sortBySortOrder } from "@/lib/api/sort-order";
 import { firstParagraph } from "@/lib/utils";
 import { ScholarshipFlag } from "@/components/shared/scholarship-flag";
@@ -60,7 +60,7 @@ export default async function Home() {
   const [fields, featuredCoursesList, whyYaclamCards, homeRoadmaps, homeScholarships, homePractitioners, homeTestimonials] =
     await Promise.all([
     getFieldsByCourse(),
-    getHomeFeaturedCourses(s.featured.cardNumberVisible),
+    getHomeLatestCourses(HOME_LATEST_COURSES),
     getWhyYaclamCards(),
     getHomeRoadmaps(),
     getHomeScholarships(),

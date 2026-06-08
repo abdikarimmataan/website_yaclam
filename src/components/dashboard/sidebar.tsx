@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import {
   BarChart3, BookOpen, Award, Heart, ShoppingCart, Settings, GraduationCap,
 } from "lucide-react";
+import { LogoutButton } from "@/components/auth/logout-button";
+import { useAuthSession } from "@/components/auth/use-auth-session";
 import { cn } from "@/lib/utils";
 
 const items = [
@@ -18,12 +20,17 @@ const items = [
 
 export function DashboardSidebar() {
   const pathname = usePathname();
+  const session = useAuthSession();
+  const initials = session?.initials ?? "S";
+  const displayName = session?.displayName ?? "Student";
   return (
     <aside className="border-b border-line bg-surface p-4 md:border-b-0 md:border-r md:p-6">
       <div className="mb-5 hidden items-center gap-2.5 px-2 md:flex">
-        <span className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-navy to-royal font-bold text-gold">A</span>
+        <span className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-navy to-royal text-sm font-bold text-gold">
+          {initials}
+        </span>
         <div>
-          <div className="text-[14px] font-bold text-navy">Abdikarim M.</div>
+          <div className="text-[14px] font-bold text-navy">{displayName}</div>
           <div className="text-[12px] text-ink-3">Student</div>
         </div>
       </div>
@@ -47,6 +54,7 @@ export function DashboardSidebar() {
       <Link href="/instructor" className="mt-4 hidden items-center gap-2.5 rounded-[10px] border border-dashed border-line px-3.5 py-3 text-[13.5px] font-semibold text-royal transition hover:border-royal md:flex">
         <GraduationCap size={17} /> Instructor area
       </Link>
+      <LogoutButton className="mt-3 hidden w-full items-center justify-center gap-2 rounded-[10px] border border-line px-3.5 py-2.5 text-[13.5px] font-semibold text-ink-3 transition hover:border-danger/30 hover:text-danger md:flex" />
     </aside>
   );
 }

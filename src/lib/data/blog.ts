@@ -165,7 +165,7 @@ const raw: B[] = [
 ];
 
 export const blogPosts: BlogPost[] = raw.map((b, i) => ({
-  id: i + 1,
+  id: String(i + 1),
   slug: slugify(b.title),
   title: b.title,
   category: b.category,

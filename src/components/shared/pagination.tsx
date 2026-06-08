@@ -6,11 +6,24 @@ type PaginationProps = {
   page: number;
   pages: number;
   basePath?: string;
+  queryParams?: Record<string, string | undefined>;
   className?: string;
 };
 
-function pageHref(basePath: string, page: number) {
-  return page <= 1 ? basePath : `${basePath}?page=${page}`;
+function pageHref(
+  basePath: string,
+  page: number,
+  queryParams?: Record<string, string | undefined>
+) {
+  const params = new URLSearchParams();
+  if (queryParams) {
+    for (const [key, value] of Object.entries(queryParams)) {
+      if (value) params.set(key, value);
+    }
+  }
+  if (page > 1) params.set("page", String(page));
+  const q = params.toString();
+  return q ? `${basePath}?${q}` : basePath;
 }
 
 function buildPageItems(current: number, total: number): (number | "ellipsis")[] {
@@ -63,7 +76,13 @@ function PillNav({
   );
 }
 
-export function Pagination({ page, pages, basePath = "/scholarships", className }: PaginationProps) {
+export function Pagination({
+  page,
+  pages,
+  basePath = "/scholarships",
+  queryParams,
+  className,
+}: PaginationProps) {
   if (pages <= 1) return null;
 
   const items = buildPageItems(page, pages);
@@ -75,7 +94,11 @@ export function Pagination({ page, pages, basePath = "/scholarships", className 
       className={cn("flex flex-wrap items-center justify-center gap-2 sm:gap-3", className)}
       aria-label="Pagination"
     >
-      <PillNav href={pageHref(basePath, prev)} disabled={page <= 1} label="Previous page">
+      <PillNav
+        href={pageHref(basePath, prev, queryParams)}
+        disabled={page <= 1}
+        label="Previous page"
+      >
         Prev
       </PillNav>
 
@@ -109,7 +132,7 @@ export function Pagination({ page, pages, basePath = "/scholarships", className 
           return (
             <Link
               key={item}
-              href={pageHref(basePath, item)}
+              href={pageHref(basePath, item, queryParams)}
               className="grid h-10 w-10 place-items-center rounded-full bg-surface-2 text-[14px] font-semibold text-ink-3 transition hover:bg-line hover:text-navy"
             >
               {item}
@@ -118,7 +141,11 @@ export function Pagination({ page, pages, basePath = "/scholarships", className 
         })}
       </div>
 
-      <PillNav href={pageHref(basePath, next)} disabled={page >= pages} label="Next page">
+      <PillNav
+        href={pageHref(basePath, next, queryParams)}
+        disabled={page >= pages}
+        label="Next page"
+      >
         Next
       </PillNav>
     </nav>

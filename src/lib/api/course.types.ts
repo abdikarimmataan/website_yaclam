@@ -1,4 +1,40 @@
-import type { Course } from "@/lib/types";
+import type { Course, Module } from "@/lib/types";
+
+export type CourseFieldRef = {
+  id?: string;
+  name?: string;
+  icon?: string;
+};
+
+export type CourseLessonApiRecord = {
+  id?: string;
+  title?: string;
+  duration?: string;
+  free?: boolean;
+  videoUrl?: string;
+  vimeoId?: string;
+  sortOrder?: number;
+  isVisible?: boolean;
+};
+
+export type CourseModuleApiRecord = {
+  title?: string;
+  sortOrder?: number;
+  isVisible?: boolean;
+  lessons?: CourseLessonApiRecord[];
+};
+
+export type CourseResourceApiRecord = {
+  id?: string;
+  title?: string;
+  description?: string;
+  fileUrl?: string;
+  fileName?: string;
+  fileSize?: number;
+  mimeType?: string;
+  sortOrder?: number;
+  isVisible?: boolean;
+};
 
 export type CourseApiRecord = {
   id: string;
@@ -6,6 +42,7 @@ export type CourseApiRecord = {
   description?: string;
   shortDescription?: string;
   category?: string;
+  fieldId?: string | CourseFieldRef | null;
   level?: string;
   language?: string;
   duration?: string;
@@ -28,6 +65,8 @@ export type CourseApiRecord = {
   rating?: number;
   reviewCount?: number;
   studentCount?: number;
+  created_at?: string;
+  updated_at?: string;
   overview?: {
     headline?: string;
     description?: string;
@@ -42,11 +81,14 @@ export type CourseApiRecord = {
     access?: string;
   };
   instructor?: {
+    instructorId?: string;
     name?: string;
     role?: string;
     bio?: string;
     avatar?: string;
   };
+  curriculum?: CourseModuleApiRecord[];
+  resources?: CourseResourceApiRecord[];
 };
 
 export interface PaginatedCourses {
@@ -63,4 +105,9 @@ export type CoursesPageResult = {
   pages: number;
   rows: number;
   pageSize: number;
+};
+
+export type CourseDetail = {
+  course: Course;
+  modules: Module[];
 };
