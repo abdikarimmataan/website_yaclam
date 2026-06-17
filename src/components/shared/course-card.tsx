@@ -1,22 +1,39 @@
 import Link from "next/link";
-import { Clock, BookOpen, Users, ChevronRight, Heart } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import type { Course } from "@/lib/types";
 import { Icon } from "@/lib/icon-map";
 import { categoryIcon } from "@/lib/data/categories";
 import { uploadUrl } from "@/lib/api/cms";
-import { Stars } from "./stars";
-import { formatStudents } from "@/lib/utils";
+import { WishlistHeartButton } from "@/components/courses/wishlist-heart-button";
+import { CourseDynamicStats } from "@/components/courses/course-dynamic-stats";
+import { CourseCardCurriculumStats } from "@/components/courses/course-card-curriculum-stats";
+import { formatCoursePrice } from "@/lib/utils";
 
 function resolveCategoryIcon(course: Course) {
   return course.categoryIcon?.trim() || categoryIcon(course.category);
 }
 
-export function CourseCard({ c }: { c: Course }) {
+export function CourseCard({
+  c,
+  initialRating,
+  initialReviewCount,
+  initialEnrollment,
+  initialDurationHours,
+  initialLessonCount,
+}: {
+  c: Course;
+  initialRating?: number;
+  initialReviewCount?: number;
+  initialEnrollment?: number;
+  initialDurationHours?: number;
+  initialLessonCount?: number;
+}) {
   const thumbnailSrc = uploadUrl(c.thumbnail);
   const iconName = resolveCategoryIcon(c);
+  const href = `/courses/${c.slug}`;
 
   return (
-    <article className="card-base">
+    <Link href={href} className="card-base flex flex-col transition-shadow hover:shadow-card">
       <div
         className="thumb-pat relative grid h-[158px] place-items-center overflow-hidden text-white"
         style={
@@ -46,28 +63,26 @@ export function CourseCard({ c }: { c: Course }) {
             {c.badge}
           </span>
         )}
-        <span className="absolute right-3 top-3 grid h-[34px] w-[34px] place-items-center rounded-full bg-white/90 text-ink-2">
-          <Heart size={16} />
-        </span>
+        <WishlistHeartButton courseId={c.id} />
       </div>
-      <Link href={`/courses/${c.slug}`} className="flex flex-1 flex-col gap-2 p-[18px]">
+      <div className="flex flex-1 flex-col gap-2 p-[18px]">
         <span className="pill">{c.level}</span>
         <h3 className="font-sans text-lg font-bold leading-snug text-navy">{c.title}</h3>
         <div className="text-[13px] text-ink-3">by {c.instructor}</div>
         <div className="flex items-center gap-3.5 text-[12.5px] text-ink-3">
-          <Stars rating={c.rating} />
-          <span>({c.reviews})</span>
-          <span className="inline-flex items-center gap-1.5">
-            <Users size={13} /> {formatStudents(c.students)}
-          </span>
+          <CourseDynamicStats
+            courseId={String(c.id)}
+            initialRating={initialRating}
+            initialReviewCount={initialReviewCount}
+            initialEnrollment={initialEnrollment}
+          />
         </div>
         <div className="flex items-center gap-3.5 text-[12.5px] text-ink-3">
-          <span className="inline-flex items-center gap-1.5">
-            <Clock size={13} /> {c.hours}h
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <BookOpen size={13} /> {c.lessons} lessons
-          </span>
+          <CourseCardCurriculumStats
+            courseId={String(c.id)}
+            initialDurationHours={initialDurationHours}
+            initialLessonCount={initialLessonCount}
+          />
         </div>
         <div className="mt-auto flex items-center justify-between border-t border-surface-2 pt-3.5">
           <span
@@ -75,18 +90,18 @@ export function CourseCard({ c }: { c: Course }) {
               c.free ? "text-success" : "text-navy"
             }`}
           >
-            {c.free ? "Free" : `$${c.price}`}
+            {c.free ? "Free" : `$${formatCoursePrice(c.price)}`}
             {!c.free && c.oldPrice && (
               <span className="ml-1.5 text-sm font-medium text-ink-3 line-through">
                 ${c.oldPrice}
               </span>
             )}
           </span>
-          <span className="btn btn-outline btn-sm">
+          <span className="btn btn-outline btn-sm pointer-events-none">
             {c.free ? "Enroll" : "Details"} <ChevronRight size={15} />
           </span>
         </div>
-      </Link>
-    </article>
+      </div>
+    </Link>
   );
 }

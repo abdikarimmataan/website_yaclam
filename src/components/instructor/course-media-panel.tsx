@@ -10,6 +10,7 @@ type Props = {
   onFieldChange: (value: string) => void;
   fieldError?: string;
   savedThumbnailUrl?: string;
+  savedVideoUrl?: string;
   thumbnailFile: File | null;
   videoFile: File | null;
   onThumbnailFileChange: (file: File | null) => void;
@@ -24,6 +25,7 @@ export function CourseMediaPanel({
   onFieldChange,
   fieldError,
   savedThumbnailUrl = "",
+  savedVideoUrl = "",
   thumbnailFile,
   videoFile,
   onThumbnailFileChange,
@@ -31,65 +33,85 @@ export function CourseMediaPanel({
   loadingFields,
   embedded = false,
 }: Props) {
-  const preview = useMemo(
+  const thumbnailPreview = useMemo(
     () => (thumbnailFile ? URL.createObjectURL(thumbnailFile) : ""),
     [thumbnailFile]
   );
 
-  useEffect(() => () => {
-    if (preview) URL.revokeObjectURL(preview);
-  }, [preview]);
+  const videoPreview = useMemo(
+    () => (videoFile ? URL.createObjectURL(videoFile) : ""),
+    [videoFile]
+  );
 
-  const thumbSrc = preview || uploadUrl(savedThumbnailUrl) || "";
+  useEffect(
+    () => () => {
+      if (thumbnailPreview) URL.revokeObjectURL(thumbnailPreview);
+      if (videoPreview) URL.revokeObjectURL(videoPreview);
+    },
+    [thumbnailPreview, videoPreview]
+  );
+
+  const thumbSrc = thumbnailPreview || uploadUrl(savedThumbnailUrl) || "";
+  const videoSrc = videoPreview || uploadUrl(savedVideoUrl) || "";
 
   const body = (
     <div className={embedded ? "space-y-4" : "space-y-4 p-4"}>
-        <div>
-          <label className="field-label text-ink-2">
-            Field <span className="text-red-400">*</span>
-          </label>
-          <Select2
-            options={fieldOptions}
-            value={fieldId}
-            onChange={onFieldChange}
-            placeholder="Select a field…"
-            searchPlaceholder="Search fields…"
-            error={fieldError}
-            loading={loadingFields}
-            showIcons
-            variant="dark"
-            allowClear={false}
-          />
-        </div>
+      <div>
+        <label className="field-label text-ink-2">
+          Field <span className="text-red-400">*</span>
+        </label>
+        <Select2
+          options={fieldOptions}
+          value={fieldId}
+          onChange={onFieldChange}
+          placeholder="Select a field…"
+          searchPlaceholder="Search fields…"
+          error={fieldError}
+          loading={loadingFields}
+          showIcons
+          variant="dark"
+          allowClear={false}
+        />
+      </div>
 
-        <div className="flex flex-col gap-4">
-          <div>
-            <label className="field-label text-ink-2">Thumbnail image</label>
-            {thumbSrc && (
-              <img src={thumbSrc} alt="" className="mb-2 h-24 w-full rounded-lg object-cover" />
-            )}
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp,image/gif"
-              className="text-xs text-ink-3"
-              onChange={(e) => onThumbnailFileChange(e.target.files?.[0] ?? null)}
-            />
-            <p className="mt-1 text-[11px] text-ink-3">Max 25MB · JPG, PNG, WebP</p>
-          </div>
-          <div>
-            <label className="field-label text-ink-2">Course video</label>
-            {videoFile && (
-              <p className="mb-2 truncate text-xs text-gold">{videoFile.name}</p>
-            )}
-            <input
-              type="file"
-              accept="video/mp4,video/webm"
-              className="text-xs text-ink-3"
-              onChange={(e) => onVideoFileChange(e.target.files?.[0] ?? null)}
-            />
-            <p className="mt-1 text-[11px] text-ink-3">Max 2GB · MP4</p>
-          </div>
+      <div className="flex flex-col gap-4">
+        <div>
+          <label className="field-label text-ink-2">Thumbnail image</label>
+          {thumbSrc ? (
+            <img src={thumbSrc} alt="" className="mb-2 h-24 w-full rounded-lg object-cover" />
+          ) : null}
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            className="text-xs text-ink-3"
+            onChange={(e) => onThumbnailFileChange(e.target.files?.[0] ?? null)}
+          />
+          <p className="mt-1 text-[11px] text-ink-3">Max 25MB · JPG, PNG, WebP</p>
         </div>
+        <div>
+          <label className="field-label text-ink-2">Course video</label>
+          {videoSrc ? (
+            <video
+              src={videoSrc}
+              controls
+              className="mb-2 max-h-40 w-full rounded-lg bg-black object-contain"
+              preload="metadata"
+            />
+          ) : null}
+          {videoFile ? (
+            <p className="mb-2 truncate text-xs text-gold">{videoFile.name}</p>
+          ) : videoSrc ? (
+            <p className="mb-2 text-xs text-ink-3">Saved course video</p>
+          ) : null}
+          <input
+            type="file"
+            accept="video/mp4,video/webm"
+            className="text-xs text-ink-3"
+            onChange={(e) => onVideoFileChange(e.target.files?.[0] ?? null)}
+          />
+          <p className="mt-1 text-[11px] text-ink-3">Max 2GB · MP4</p>
+        </div>
+      </div>
     </div>
   );
 

@@ -30,7 +30,7 @@ type Props = {
 };
 
 export function CourseFormEditor({ recordId, onBack, onSaved }: Props) {
-  const session = useAuthSession();
+  const { session } = useAuthSession();
   const editing = Boolean(recordId);
   const [activeId, setActiveId] = useState<string | null>(recordId);
   const [form, setForm] = useState<Record<string, unknown>>(courseRecordToForm(null));
@@ -157,7 +157,7 @@ export function CourseFormEditor({ recordId, onBack, onSaved }: Props) {
       const savedId = saved.id ? String(saved.id) : activeId;
       setActiveId(savedId);
       setUploadFiles({});
-      if (savedId) await updateInstructorCourseStatus(savedId, form.status !== false);
+      if (savedId) await updateInstructorCourseStatus(savedId, true);
       toast.success(editing ? "Course updated." : "Course created.");
       onSaved();
     } catch (err) {
@@ -231,6 +231,7 @@ export function CourseFormEditor({ recordId, onBack, onSaved }: Props) {
                   }}
                   fieldError={errors.fieldId}
                   savedThumbnailUrl={String(form.thumbnail ?? "")}
+                  savedVideoUrl={String(form.previewVideoUrl ?? "")}
                   thumbnailFile={uploadFiles.thumbnail ?? null}
                   videoFile={uploadFiles.video ?? null}
                   onThumbnailFileChange={(f) => setUploadFiles((p) => ({ ...p, thumbnail: f }))}

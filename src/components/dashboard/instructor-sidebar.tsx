@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, BookOpen, Users, Star, Wallet, ArrowLeft } from "lucide-react";
+import { LayoutDashboard, BookOpen, Users, Star, Wallet } from "lucide-react";
 import { LogoutButton } from "@/components/auth/logout-button";
 import { useAuthSession } from "@/components/auth/use-auth-session";
 import { cn } from "@/lib/utils";
@@ -17,7 +17,7 @@ const items = [
 
 export function InstructorSidebar() {
   const pathname = usePathname();
-  const session = useAuthSession();
+  const { session } = useAuthSession();
   const initials = session?.initials ?? "I";
   const displayName = session?.displayName ?? "Instructor";
   return (
@@ -41,10 +41,7 @@ export function InstructorSidebar() {
           );
         })}
       </nav>
-      <Link href="/dashboard" className="mt-4 hidden items-center gap-2.5 rounded-[10px] border border-dashed border-white/20 px-3.5 py-3 text-[13.5px] font-semibold text-gold transition hover:border-gold lg:flex">
-        <ArrowLeft size={16} /> Student view
-      </Link>
-      <LogoutButton className="mt-3 hidden w-full items-center justify-center gap-2 rounded-[10px] border border-white/15 px-3.5 py-2.5 text-[13.5px] font-semibold text-white/70 transition hover:border-white/30 hover:text-white lg:flex" />
+      <LogoutButton className="mt-4 hidden w-full items-center justify-center gap-2 rounded-[10px] border border-white/15 px-3.5 py-2.5 text-[13.5px] font-semibold text-white/70 transition hover:border-white/30 hover:text-white lg:flex" />
     </aside>
   );
 }

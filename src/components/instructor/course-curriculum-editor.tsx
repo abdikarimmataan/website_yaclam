@@ -2,12 +2,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { ArrowLeft, Loader2, Plus, Trash2 } from "lucide-react";
-import type { CourseLesson, CourseModule } from "@/lib/instructor/course-types";
+import type { CourseLessonFormRow, CourseModule } from "@/lib/instructor/course-types";
 import { buildCurriculumPayload } from "@/lib/instructor/curriculum";
 import {
   getInstructorCourseById,
   saveInstructorCurriculum,
-  uploadInstructorLessonVideo,
 } from "@/lib/api/instructor-course.service";
 import { toast } from "@/lib/utils/toast";
 
@@ -22,7 +21,7 @@ function emptyModule(i: number): CourseModule {
   return { title: "", sortOrder: i, isVisible: true, lessons: [] };
 }
 
-function emptyLesson(mi: number, li: number, prefix: string): CourseLesson {
+function emptyLesson(mi: number, li: number, prefix: string): CourseLessonFormRow {
   return {
     id: `${prefix}-m${mi + 1}-l${li + 1}`,
     title: "",
@@ -31,7 +30,19 @@ function emptyLesson(mi: number, li: number, prefix: string): CourseLesson {
     videoUrl: "",
     sortOrder: li,
     isVisible: true,
+    pendingVideoFile: null,
   };
+}
+
+function normalizeCurriculum(value: unknown): CourseModule[] {
+  if (!Array.isArray(value)) return [];
+  return value.map((mod) => ({
+    ...(mod as CourseModule),
+    lessons: ((mod as CourseModule).lessons ?? []).map((lesson) => ({
+      ...lesson,
+      pendingVideoFile: null,
+    })),
+  }));
 }
 
 export function CourseCurriculumEditor({ courseId, courseTitle, onBack, onSaved }: Props) {
@@ -39,14 +50,14 @@ export function CourseCurriculumEditor({ courseId, courseTitle, onBack, onSaved 
   const [prefix, setPrefix] = useState("course");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState<string | null>(null);
+  const [fileInputKeys, setFileInputKeys] = useState<Record<string, number>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
       const record = await getInstructorCourseById(courseId);
-      setCurriculum(Array.isArray(record.curriculum) ? record.curriculum : []);
+      setCurriculum(normalizeCurriculum(record.curriculum));
       setPrefix(String(record.id ?? courseId));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to load");
@@ -60,14 +71,17 @@ export function CourseCurriculumEditor({ courseId, courseTitle, onBack, onSaved 
   }, [load]);
 
   const save = async () => {
-    const { payload, errors: e } = buildCurriculumPayload(curriculum);
+    const { payload, errors: e, toastMessages } = buildCurriculumPayload(curriculum);
     if (!payload) {
       setErrors(e);
+      toastMessages.forEach((msg) => toast.error(msg));
       return;
     }
     setSaving(true);
+    setErrors({});
     try {
-      await saveInstructorCurriculum(courseId, payload);
+      const saved = await saveInstructorCurriculum(courseId, payload);
+      setCurriculum(normalizeCurriculum(saved.curriculum));
       toast.success("Curriculum saved.");
       onSaved();
     } catch (err) {
@@ -77,32 +91,21 @@ export function CourseCurriculumEditor({ courseId, courseTitle, onBack, onSaved 
     }
   };
 
-  const uploadVideo = async (mi: number, li: number, file: File) => {
+  const clearLessonVideo = (mi: number, li: number) => {
+    setCurriculum((p) =>
+      p.map((m, i) =>
+        i !== mi
+          ? m
+          : {
+              ...m,
+              lessons: (m.lessons ?? []).map((lesson, j) =>
+                j === li ? { ...lesson, videoUrl: "", pendingVideoFile: null } : lesson
+              ),
+            }
+      )
+    );
     const key = `${mi}-${li}`;
-    setUploading(key);
-    try {
-      const res = await uploadInstructorLessonVideo(courseId, mi, li, file);
-      if (res.videoUrl) {
-        setCurriculum((prev) =>
-          prev.map((mod, i) =>
-            i !== mi
-              ? mod
-              : {
-                  ...mod,
-                  lessons: (mod.lessons ?? []).map((lesson, j) =>
-                    j === li ? { ...lesson, videoUrl: res.videoUrl } : lesson
-                  ),
-                }
-          )
-        );
-        if (res.course?.curriculum) setCurriculum(res.course.curriculum);
-      }
-      toast.success("Video uploaded.");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Upload failed");
-    } finally {
-      setUploading(null);
-    }
+    setFileInputKeys((prev) => ({ ...prev, [key]: (prev[key] ?? 0) + 1 }));
   };
 
   return (
@@ -123,16 +126,21 @@ export function CourseCurriculumEditor({ courseId, courseTitle, onBack, onSaved 
           {curriculum.map((mod, mi) => (
             <div key={mi} className="rounded-xl border border-[#1f2a4a] bg-[#0f1631] p-4">
               <div className="mb-3 flex gap-2">
-                <input
-                  className="field-input flex-1 bg-[#0b1126] text-[#e8ecf8]"
-                  placeholder="Module title *"
-                  value={String(mod.title ?? "")}
-                  onChange={(e) =>
-                    setCurriculum((p) =>
-                      p.map((m, i) => (i === mi ? { ...m, title: e.target.value } : m))
-                    )
-                  }
-                />
+                <div className="flex-1">
+                  <input
+                    className="field-input w-full bg-[#0b1126] text-[#e8ecf8]"
+                    placeholder="Module title *"
+                    value={String(mod.title ?? "")}
+                    onChange={(e) =>
+                      setCurriculum((p) =>
+                        p.map((m, i) => (i === mi ? { ...m, title: e.target.value } : m))
+                      )
+                    }
+                  />
+                  {errors[`module-${mi}-title`] && (
+                    <p className="mt-1 text-xs text-red-400">{errors[`module-${mi}-title`]}</p>
+                  )}
+                </div>
                 <button
                   type="button"
                   onClick={() => setCurriculum((p) => p.filter((_, i) => i !== mi))}
@@ -141,61 +149,139 @@ export function CourseCurriculumEditor({ courseId, courseTitle, onBack, onSaved 
                   <Trash2 className="h-4 w-4" />
                 </button>
               </div>
-              {(mod.lessons ?? []).map((lesson, li) => (
-                <div key={li} className="mb-3 rounded-lg border border-[#1f2a4a] bg-[#0b1126] p-3">
-                  <input
-                    className="field-input mb-2 w-full"
-                    placeholder="Lesson title *"
-                    value={String(lesson.title ?? "")}
-                    onChange={(e) =>
-                      setCurriculum((p) =>
-                        p.map((m, i) =>
-                          i !== mi
-                            ? m
-                            : {
-                                ...m,
-                                lessons: (m.lessons ?? []).map((l, j) =>
-                                  j === li ? { ...l, title: e.target.value } : l
-                                ),
-                              }
+              {(mod.lessons ?? []).map((lesson, li) => {
+                const row = lesson as CourseLessonFormRow;
+                const videoUrl = String(row.videoUrl ?? "").trim();
+                const pendingFile = row.pendingVideoFile ?? null;
+                const hasSavedVideo = Boolean(videoUrl && !pendingFile);
+
+                return (
+                  <div key={li} className="mb-3 rounded-lg border border-[#1f2a4a] bg-[#0b1126] p-3">
+                    <input
+                      className="field-input mb-2 w-full"
+                      placeholder="Lesson title *"
+                      value={String(row.title ?? "")}
+                      onChange={(e) =>
+                        setCurriculum((p) =>
+                          p.map((m, i) =>
+                            i !== mi
+                              ? m
+                              : {
+                                  ...m,
+                                  lessons: (m.lessons ?? []).map((l, j) =>
+                                    j === li ? { ...l, title: e.target.value } : l
+                                  ),
+                                }
+                          )
                         )
-                      )
-                    }
-                  />
-                  <input
-                    className="field-input mb-2 w-full"
-                    placeholder="Duration e.g. 12:30"
-                    value={String(lesson.duration ?? "")}
-                    onChange={(e) =>
-                      setCurriculum((p) =>
-                        p.map((m, i) =>
-                          i !== mi
-                            ? m
-                            : {
-                                ...m,
-                                lessons: (m.lessons ?? []).map((l, j) =>
-                                  j === li ? { ...l, duration: e.target.value } : l
-                                ),
-                              }
+                      }
+                    />
+                    <input
+                      className="field-input mb-2 w-full cursor-default select-none bg-[#0b1126] text-gray-400"
+                      placeholder="Auto from video"
+                      value={String(row.duration ?? "")}
+                      readOnly
+                      title="Duration is set automatically from the selected video"
+                    />
+
+                    {hasSavedVideo ? (
+                      <p className="mb-2 text-xs text-emerald-400">
+                        Current video: {videoUrl.split("/").pop()} —{" "}
+                        <button
+                          type="button"
+                          onClick={() => clearLessonVideo(mi, li)}
+                          className="text-red-400 underline"
+                        >
+                          remove
+                        </button>
+                      </p>
+                    ) : null}
+
+                    {pendingFile ? (
+                      <p className="mb-2 text-xs text-emerald-400">
+                        New video selected: {pendingFile.name}
+                      </p>
+                    ) : null}
+
+                    {!lessonHasVideo(row) && errors[`module-${mi}-lesson-${li}-video`] ? (
+                      <p className="mb-1 text-xs text-red-400">
+                        {errors[`module-${mi}-lesson-${li}-video`]}
+                      </p>
+                    ) : null}
+
+                    <input
+                      key={fileInputKeys[`${mi}-${li}`] ?? 0}
+                      type="file"
+                      accept="video/mp4"
+                      className="text-xs text-ink-3"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0] ?? null;
+                        setCurriculum((p) =>
+                          p.map((m, i) =>
+                            i !== mi
+                              ? m
+                              : {
+                                  ...m,
+                                  lessons: (m.lessons ?? []).map((l, j) =>
+                                    j === li ? { ...l, pendingVideoFile: f } : l
+                                  ),
+                                }
+                          )
+                        );
+                        setErrors({});
+                        const key = `${mi}-${li}`;
+                        setFileInputKeys((prev) => ({ ...prev, [key]: (prev[key] ?? 0) + 1 }));
+
+                        if (f) {
+                          const url = URL.createObjectURL(f);
+                          const vid = document.createElement("video");
+                          vid.preload = "metadata";
+                          vid.onloadedmetadata = () => {
+                            URL.revokeObjectURL(url);
+                            const total = Math.floor(vid.duration || 0);
+                            const mins = Math.floor(total / 60);
+                            const secs = total % 60;
+                            const formatted = `${mins}:${String(secs).padStart(2, "0")}`;
+                            setCurriculum((p) =>
+                              p.map((m, i) =>
+                                i !== mi
+                                  ? m
+                                  : {
+                                      ...m,
+                                      lessons: (m.lessons ?? []).map((l, j) =>
+                                        j === li ? { ...l, duration: formatted } : l
+                                      ),
+                                    }
+                              )
+                            );
+                          };
+                          vid.src = url;
+                        }
+                      }}
+                    />
+                    <p className="mt-1 text-[11px] text-ink-3">
+                      MP4 · saved when you click Save curriculum
+                    </p>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setCurriculum((p) =>
+                          p.map((m, i) =>
+                            i !== mi
+                              ? m
+                              : { ...m, lessons: (m.lessons ?? []).filter((_, j) => j !== li) }
+                          )
                         )
-                      )
-                    }
-                  />
-                  {lesson.videoUrl && (
-                    <p className="mb-1 text-xs text-emerald-400">Video attached</p>
-                  )}
-                  <input
-                    type="file"
-                    accept="video/mp4"
-                    className="text-xs text-ink-3"
-                    disabled={uploading === `${mi}-${li}`}
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      if (f) uploadVideo(mi, li, f);
-                    }}
-                  />
-                </div>
-              ))}
+                      }
+                      className="mt-2 text-xs text-red-400 hover:underline"
+                    >
+                      <Trash2 className="mr-1 inline h-3.5 w-3.5" />
+                      Remove lesson
+                    </button>
+                  </div>
+                );
+              })}
               <button
                 type="button"
                 onClick={() =>
@@ -237,4 +323,8 @@ export function CourseCurriculumEditor({ courseId, courseTitle, onBack, onSaved 
       )}
     </div>
   );
+}
+
+function lessonHasVideo(lesson: CourseLessonFormRow): boolean {
+  return Boolean(String(lesson.videoUrl ?? "").trim() || lesson.pendingVideoFile);
 }

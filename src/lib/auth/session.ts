@@ -5,8 +5,15 @@ const AUTH_COOKIE = "yaclam_auth";
 const ROLE_COOKIE = "yaclam_role";
 const MAX_AGE = 60 * 60 * 24 * 7;
 
+export const AUTH_SESSION_EVENT = "yaclam:auth-changed";
+
 function cookieString(name: string, value: string, maxAge = MAX_AGE) {
   return `${name}=${encodeURIComponent(value)}; path=/; max-age=${maxAge}; SameSite=Lax`;
+}
+
+export function notifyAuthChange() {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new Event(AUTH_SESSION_EVENT));
 }
 
 export function saveSession(session: AuthSession) {
@@ -14,6 +21,7 @@ export function saveSession(session: AuthSession) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
   document.cookie = cookieString(AUTH_COOKIE, "1");
   document.cookie = cookieString(ROLE_COOKIE, session.role);
+  notifyAuthChange();
 }
 
 export function readSession(): AuthSession | null {
@@ -21,7 +29,9 @@ export function readSession(): AuthSession | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
-    return JSON.parse(raw) as AuthSession;
+    const parsed = JSON.parse(raw) as AuthSession;
+    if (!parsed?.accessToken) return null;
+    return parsed;
   } catch {
     return null;
   }
@@ -32,6 +42,15 @@ export function clearSession() {
   localStorage.removeItem(STORAGE_KEY);
   document.cookie = `${AUTH_COOKIE}=; path=/; max-age=0; SameSite=Lax`;
   document.cookie = `${ROLE_COOKIE}=; path=/; max-age=0; SameSite=Lax`;
+  notifyAuthChange();
+}
+
+/** Full logout: clear session and replace history so Back cannot return to protected pages. */
+export function performLogout(redirectTo = "/") {
+  clearSession();
+  if (typeof window !== "undefined") {
+    window.location.replace(redirectTo);
+  }
 }
 
 export function redirectPathForRole(role: AuthRole) {

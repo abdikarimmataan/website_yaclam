@@ -9,6 +9,10 @@ export type CourseLesson = {
   isVisible?: boolean;
 };
 
+export type CourseLessonFormRow = CourseLesson & {
+  pendingVideoFile?: File | null;
+};
+
 export type CourseModule = {
   title?: string;
   sortOrder?: number;
@@ -41,4 +45,5 @@ export type FormField = {
   required?: boolean;
   placeholder?: string;
   options?: FormFieldOption[];
+  decimals?: number;
 };

@@ -1,4 +1,4 @@
-import type { Course, Module } from "@/lib/types";
+import type { Course, CourseResource, Module } from "@/lib/types";
 
 export type CourseFieldRef = {
   id?: string;
@@ -37,7 +37,8 @@ export type CourseResourceApiRecord = {
 };
 
 export type CourseApiRecord = {
-  id: string;
+  id?: string;
+  _id?: string;
   title?: string;
   description?: string;
   shortDescription?: string;
@@ -52,6 +53,7 @@ export type CourseApiRecord = {
   access?: string;
   instructorName?: string;
   thumbnail?: string;
+  previewVideoUrl?: string;
   price?: number;
   originalPrice?: number;
   isFree?: boolean;
@@ -110,4 +112,5 @@ export type CoursesPageResult = {
 export type CourseDetail = {
   course: Course;
   modules: Module[];
+  resources: CourseResource[];
 };

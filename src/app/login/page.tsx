@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { ArrowRight, BookOpen, GraduationCap, Loader2 } from "lucide-react";
 import { AuthArt } from "@/components/shared/auth-art";
@@ -18,7 +18,7 @@ const roles: { id: AuthRole; label: string; hint: string; icon: typeof Graduatio
 ];
 
 export default function LoginPage() {
-  const router = useRouter();
+  const searchParams = useSearchParams();
   const [role, setRole] = useState<AuthRole>("student");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -37,7 +37,11 @@ export default function LoginPage() {
       const session = await login(role, { email: email.trim(), password });
       saveSession(session);
       toast.success(`Welcome back, ${session.displayName}.`);
-      router.replace(redirectPathForRole(session.role));
+      const next = searchParams.get("next");
+      const fallback = redirectPathForRole(session.role);
+      const destination =
+        next && next.startsWith("/") && !next.startsWith("//") ? next : fallback;
+      window.location.replace(destination);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Login failed. Please try again.");
     } finally {

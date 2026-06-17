@@ -51,7 +51,7 @@ export function CoursePreviewModal({ open, loading, record, onClose }: Props) {
                 <span>Level: {record.level ?? "—"}</span>
                 <span>Language: {record.language ?? "—"}</span>
                 <span>Price: {record.isFree ? "Free" : `$${record.price ?? 0}`}</span>
-                <span>Published: {record.isPublished !== false ? "Yes" : "No"}</span>
+                <span>Featured: {record.isFeatured ? "Yes" : "No"}</span>
               </div>
               {record.overview?.outcomes?.length ? (
                 <div>

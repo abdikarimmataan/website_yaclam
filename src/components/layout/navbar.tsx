@@ -3,9 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, User } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "./theme-toggle";
+import { useAuthSession } from "@/components/auth/use-auth-session";
+import { redirectPathForRole } from "@/lib/auth/session";
 
 const links = [
   { href: "/courses", label: "Courses" },
@@ -18,6 +20,8 @@ const links = [
 export function Navbar() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const { session, isLoggedIn } = useAuthSession();
+  const dashboardHref = session ? redirectPathForRole(session.role) : "/dashboard";
 
   return (
     <nav className="sticky top-0 z-50 border-b border-line bg-white/90 backdrop-blur-md">
@@ -48,11 +52,20 @@ export function Navbar() {
 
         <div className="flex items-center gap-3">
           <ThemeToggle className="hidden sm:inline-flex" />
-          <Link href="/login" className="hidden font-bold text-navy lg:inline">Log in</Link>
-          <Link href="/register" className="btn btn-gold btn-sm hidden lg:inline-flex">Start Learning</Link>
-          <Link href="/dashboard" className="hidden lg:inline-flex btn btn-outline btn-sm" aria-label="Dashboard">
-            <User size={16} />
-          </Link>
+          {isLoggedIn ? (
+            <Link href={dashboardHref} className="btn btn-navy btn-sm hidden lg:inline-flex">
+              Dashboard
+            </Link>
+          ) : (
+            <>
+              <Link href="/login" className="hidden font-bold text-navy lg:inline">
+                Log in
+              </Link>
+              <Link href="/register" className="btn btn-gold btn-sm hidden lg:inline-flex">
+                Register
+              </Link>
+            </>
+          )}
           <button className="grid place-items-center lg:hidden" onClick={() => setOpen(!open)} aria-label="Menu">
             {open ? <X size={24} className="text-navy" /> : <Menu size={24} className="text-navy" />}
           </button>
@@ -67,8 +80,20 @@ export function Navbar() {
             </Link>
           ))}
           <div className="flex gap-2.5 pt-3">
-            <Link href="/login" onClick={() => setOpen(false)} className="btn btn-outline btn-sm flex-1">Log in</Link>
-            <Link href="/register" onClick={() => setOpen(false)} className="btn btn-gold btn-sm flex-1">Sign up</Link>
+            {isLoggedIn ? (
+              <Link href={dashboardHref} onClick={() => setOpen(false)} className="btn btn-navy btn-sm flex-1">
+                Dashboard
+              </Link>
+            ) : (
+              <>
+                <Link href="/login" onClick={() => setOpen(false)} className="btn btn-outline btn-sm flex-1">
+                  Log in
+                </Link>
+                <Link href="/register" onClick={() => setOpen(false)} className="btn btn-gold btn-sm flex-1">
+                  Register
+                </Link>
+              </>
+            )}
           </div>
           <div className="flex items-center justify-between pt-3">
             <span className="text-[14px] font-semibold text-ink-2">Theme</span>

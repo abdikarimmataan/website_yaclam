@@ -1,21 +1,31 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, Play, Lock, Star, CheckCircle2 } from "lucide-react";
+import { ChevronDown, Play, Lock, CheckCircle2 } from "lucide-react";
 import type { Course, Module } from "@/lib/types";
+import type { CourseRatingsResponse } from "@/lib/api/course-rating.service";
 import { uploadUrl } from "@/lib/api/cms";
-import { cn } from "@/lib/utils";
+import { CourseReviewsTab } from "@/components/courses/course-reviews-tab";
+import { cn, formatCourseHoursLabel } from "@/lib/utils";
 
 const TABS = ["Overview", "Curriculum", "Details", "Instructor", "Reviews"] as const;
 type Tab = (typeof TABS)[number];
 
-const sampleReviews = [
-  { name: "Maxamed A.", rating: 5, date: "2 weeks ago", text: "Casharradu aad bay u faahfaahsan yihiin. Si fudud baan u fahmay — waan ku talin lahaa qof kasta.", initials: "MA" },
-  { name: "Khadija H.", rating: 5, date: "1 month ago", text: "The projects are practical and the Somali explanations made hard concepts click. Worth every cent.", initials: "KH" },
-  { name: "Cabdi N.", rating: 4, date: "1 month ago", text: "Great course overall. Would love even more advanced exercises at the end, but the foundation is excellent.", initials: "CN" },
-];
-
-export function CourseTabs({ course, modules }: { course: Course; modules: Module[] }) {
+export function CourseTabs({
+  course,
+  modules,
+  ratingsData = null,
+  enrollmentCount = 0,
+  durationHours = 0,
+  lessonCount = 0,
+}: {
+  course: Course;
+  modules: Module[];
+  ratingsData?: CourseRatingsResponse | null;
+  enrollmentCount?: number;
+  durationHours?: number;
+  lessonCount?: number;
+}) {
   const [tab, setTab] = useState<Tab>("Overview");
   const [open, setOpen] = useState(0);
   const initials = course.instructor.split(" ").map((w) => w[0]).slice(0, 2).join("");
@@ -94,8 +104,8 @@ export function CourseTabs({ course, modules }: { course: Course; modules: Modul
           {[
             ["Skill level", course.level],
             ["Language", course.language],
-            ["Lessons", `${course.lessons}`],
-            ["Duration", course.hours ? `${course.hours} hours` : "—"],
+            ["Lessons", `${lessonCount}`],
+            ["Duration", formatCourseHoursLabel(durationHours)],
             ["Certificate", course.certificate ? "Yes" : "No"],
             ["Access", course.expiry],
           ].map(([k, v]) => (
@@ -129,35 +139,13 @@ export function CourseTabs({ course, modules }: { course: Course; modules: Modul
       )}
 
       {tab === "Reviews" && (
-        <div>
-          <div className="mb-6 flex items-center gap-5 rounded-2xl border border-line bg-surface p-6">
-            <div className="text-center">
-              <div className="font-display text-5xl font-semibold text-navy">{course.rating.toFixed(1)}</div>
-              <div className="mt-1 flex justify-center gap-0.5">
-                {[1, 2, 3, 4, 5].map((s) => <Star key={s} size={15} fill={s <= Math.round(course.rating) ? "#C9A84C" : "none"} stroke="#C9A84C" />)}
-              </div>
-              <div className="mt-1 text-[13px] text-ink-3">{course.reviews} reviews</div>
-            </div>
-            <p className="text-[14.5px] text-ink-2">Rated by {course.reviews.toLocaleString()} learners. Here&apos;s what a few of them said.</p>
-          </div>
-          <div className="flex flex-col gap-4">
-            {sampleReviews.map((r) => (
-              <div key={r.name} className="rounded-2xl border border-line bg-white p-5">
-                <div className="mb-2 flex items-center gap-3">
-                  <div className="grid h-10 w-10 place-items-center rounded-full bg-navy font-bold text-gold">{r.initials}</div>
-                  <div>
-                    <div className="font-bold text-navy">{r.name}</div>
-                    <div className="flex items-center gap-2 text-[12px] text-ink-3">
-                      <span className="flex gap-0.5">{[1, 2, 3, 4, 5].map((s) => <Star key={s} size={11} fill={s <= r.rating ? "#C9A84C" : "none"} stroke="#C9A84C" />)}</span>
-                      {r.date}
-                    </div>
-                  </div>
-                </div>
-                <p className="text-[14.5px] text-ink-2">{r.text}</p>
-              </div>
-            ))}
-          </div>
-        </div>
+        <CourseReviewsTab
+          courseId={String(course.id)}
+          initialRating={ratingsData?.rating ?? 0}
+          initialReviewCount={ratingsData?.reviewCount ?? 0}
+          initialEnrollment={enrollmentCount}
+          initialRatings={ratingsData?.ratings ?? []}
+        />
       )}
     </div>
   );
