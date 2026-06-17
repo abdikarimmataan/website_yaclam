@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  BarChart3, BookOpen, Award, Heart, ShoppingCart, Settings, GraduationCap,
+  BarChart3, BookOpen, Heart, ShoppingCart, Settings,
 } from "lucide-react";
 import { LogoutButton } from "@/components/auth/logout-button";
 import { useAuthSession } from "@/components/auth/use-auth-session";
@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 const items = [
   { href: "/dashboard", label: "Dashboard", icon: BarChart3 },
   { href: "/dashboard/courses", label: "My Courses", icon: BookOpen },
-  { href: "/dashboard/certificates", label: "Certificates", icon: Award },
+  // { href: "/dashboard/certificates", label: "Certificates", icon: Award },
   { href: "/dashboard/wishlist", label: "Wishlist", icon: Heart },
   { href: "/dashboard/orders", label: "Orders", icon: ShoppingCart },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
@@ -20,7 +20,7 @@ const items = [
 
 export function DashboardSidebar() {
   const pathname = usePathname();
-  const session = useAuthSession();
+  const { session } = useAuthSession();
   const initials = session?.initials ?? "S";
   const displayName = session?.displayName ?? "Student";
   return (
@@ -51,10 +51,7 @@ export function DashboardSidebar() {
           );
         })}
       </nav>
-      <Link href="/instructor" className="mt-4 hidden items-center gap-2.5 rounded-[10px] border border-dashed border-line px-3.5 py-3 text-[13.5px] font-semibold text-royal transition hover:border-royal md:flex">
-        <GraduationCap size={17} /> Instructor area
-      </Link>
-      <LogoutButton className="mt-3 hidden w-full items-center justify-center gap-2 rounded-[10px] border border-line px-3.5 py-2.5 text-[13.5px] font-semibold text-ink-3 transition hover:border-danger/30 hover:text-danger md:flex" />
+      <LogoutButton className="mt-4 hidden w-full items-center justify-center gap-2 rounded-[10px] border border-line px-3.5 py-2.5 text-[13.5px] font-semibold text-ink-3 transition hover:border-danger/30 hover:text-danger md:flex" />
     </aside>
   );
 }

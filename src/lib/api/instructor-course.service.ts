@@ -2,6 +2,7 @@ import { api } from "@/api/http";
 import { readSession } from "@/lib/auth/session";
 import type { CourseApiRecord } from "@/lib/api/course.types";
 import type { CourseModule } from "@/lib/instructor/course-types";
+import type { CurriculumSavePayload } from "@/lib/instructor/curriculum";
 import type { ResourcesSavePayload } from "@/lib/instructor/resources";
 
 const BASE = "/course/instructor";
@@ -12,11 +13,9 @@ const JSON_BODY_KEYS = new Set([
   "curriculum",
   "resources",
   "resourceFileIndexes",
+  "lessonVideoTargets",
   "details",
   "instructor",
-  "badges",
-  "ctaButton",
-  "wishlistButton",
 ]);
 
 export type FieldOption = {
@@ -98,6 +97,8 @@ export async function getInstructorCourses(params: { page?: number; pageSize?: n
   return api.get<Paginated<CourseApiRecord>>(`${BASE}/getAll?${q}`);
 }
 
+
+
 export async function getInstructorCourseById(id: string) {
   return api.get<CourseApiRecord>(`${BASE}/getById/${id}`);
 }
@@ -132,7 +133,21 @@ export async function deleteInstructorCourse(id: string) {
   return api.delete<{ message?: string }>(`${BASE}/delete/${id}`);
 }
 
-export async function saveInstructorCurriculum(courseId: string, curriculum: CourseModule[]) {
+export async function saveInstructorCurriculum(courseId: string, payload: CurriculumSavePayload) {
+  const { curriculum, lessonVideoTargets, files } = payload;
+  if (files.length > 0) {
+    const fd = new FormData();
+    fd.append("curriculum", JSON.stringify(curriculum));
+    fd.append("lessonVideoTargets", JSON.stringify(lessonVideoTargets));
+    files.forEach((file) => fd.append("lessonVideos", file));
+
+    const res = await fetch(`${API_BASE}${BASE}/update/${courseId}`, {
+      method: "PATCH",
+      headers: authHeaders(),
+      body: fd,
+    });
+    return parseCourseResponse(res);
+  }
   return api.patch<CourseApiRecord>(`${BASE}/update/${courseId}`, { curriculum });
 }
 
@@ -158,12 +173,14 @@ export async function uploadInstructorLessonVideo(
   courseId: string,
   moduleIndex: number,
   lessonIndex: number,
-  file: File
+  file: File,
+  lessonId?: string
 ) {
   const fd = new FormData();
   fd.append("video", file);
   fd.append("moduleIndex", String(moduleIndex));
   fd.append("lessonIndex", String(lessonIndex));
+  fd.append("lessonId", lessonId ?? "");
 
   const res = await fetch(`${API_BASE}${BASE}/${courseId}/curriculum/lesson-video`, {
     method: "POST",

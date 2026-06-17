@@ -23,6 +23,7 @@ export interface Course {
   slug: string;
   title: string;
   category: string;
+  fieldId?: string;
   categoryIcon?: string;
   instructor: string;
   instructorRole?: string;
@@ -61,6 +62,16 @@ export interface Lesson {
 export interface Module {
   title: string;
   lessons: Lesson[];
+}
+
+export interface CourseResource {
+  id: string;
+  title: string;
+  description?: string;
+  fileUrl: string;
+  fileName?: string;
+  fileSize?: number;
+  mimeType?: string;
 }
 
 export interface Scholarship {

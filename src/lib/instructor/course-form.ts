@@ -65,9 +65,6 @@ export function courseRecordToForm(record: CourseApiRecord | null): Record<strin
   if (!record) {
     return {
       ...emptyFormValues(),
-      isPublished: true,
-      isVisible: true,
-      status: true,
       certificate: true,
       "instructor.instructorId": "",
       "instructor.name": "",
@@ -100,6 +97,12 @@ export function courseRecordToForm(record: CourseApiRecord | null): Record<strin
 
   if (record.thumbnail) form.thumbnail = record.thumbnail;
 
+  const previewVideo =
+    record.previewVideoUrl?.trim() ||
+    record.curriculum?.[0]?.lessons?.[0]?.videoUrl?.trim() ||
+    "";
+  if (previewVideo) form.previewVideoUrl = previewVideo;
+
   const fieldId = getFieldId(record);
   if (fieldId) form.fieldId = fieldId;
 
@@ -114,7 +117,13 @@ export function courseRecordToForm(record: CourseApiRecord | null): Record<strin
     form["overview.outcomes"] = record.overview.outcomes.join(", ");
   }
 
-  form.status = record.status !== false;
+  const details = record.details;
+  if (details) {
+    if (!String(form.level ?? "").trim() && details.skillLevel) form.level = details.skillLevel;
+    if (!String(form.language ?? "").trim() && details.language) form.language = details.language;
+    if (!String(form.access ?? "").trim() && details.access) form.access = details.access;
+  }
+
   return form;
 }
 
@@ -130,11 +139,16 @@ function validateFields(form: Record<string, unknown>, fields: FormField[]): Rec
   return errors;
 }
 
+function roundMoney(value: number) {
+  return Math.round(value * 100) / 100;
+}
+
 function coerceFieldValue(field: FormField, raw: unknown): unknown {
   if (field.type === "boolean") return raw === true || raw === "true";
   if (field.type === "number") {
     const n = Number(raw);
-    return Number.isFinite(n) ? n : 0;
+    if (!Number.isFinite(n)) return 0;
+    return field.decimals != null ? roundMoney(n) : n;
   }
   return String(raw ?? "").trim();
 }
@@ -149,6 +163,35 @@ function setNested(obj: Record<string, unknown>, key: string, value: unknown) {
       cur = cur[part] as Record<string, unknown>;
     }
   });
+}
+
+function sanitizePayloadForBackend(payload: Record<string, unknown>) {
+  delete payload.status;
+  delete payload.badges;
+  delete payload.ctaButton;
+  delete payload.wishlistButton;
+  delete payload.curriculum;
+  delete payload.durationHours;
+  delete payload.lessonCount;
+  delete payload.rating;
+  delete payload.reviewCount;
+  delete payload.studentCount;
+  delete payload.sortOrder;
+
+  if (payload.details && typeof payload.details === "object") {
+    const details = { ...(payload.details as Record<string, unknown>) };
+    delete details.durationHours;
+    delete details.lessonCount;
+    payload.details = details;
+  }
+
+  if (payload.instructor && typeof payload.instructor === "object") {
+    const instructor = { ...(payload.instructor as Record<string, unknown>) };
+    const instructorId = String(instructor.instructorId ?? "").trim();
+    if (instructorId) instructor.instructorId = instructorId;
+    else delete instructor.instructorId;
+    payload.instructor = instructor;
+  }
 }
 
 export function buildCoursePayload(
@@ -181,8 +224,6 @@ export function buildCoursePayload(
   payload.details = {
     skillLevel: String(payload.level ?? "Beginner"),
     language: String(payload.language ?? "Somali"),
-    durationHours: Number(payload.durationHours ?? 0),
-    lessonCount: Number(payload.lessonCount ?? 0),
     certificate: form.certificate !== false,
     access: String(payload.access ?? "1 Year"),
   };
@@ -198,15 +239,12 @@ export function buildCoursePayload(
   if (instructor.name) payload.instructorName = instructor.name;
   if (instructor.instructorId) payload.instructorId = instructor.instructorId;
 
+  payload.isPublished = true;
   if (!editing) {
-    payload.isPublished = form.isPublished !== false;
-    payload.isVisible = form.isVisible !== false;
+    payload.isVisible = true;
   }
 
-  delete payload.status;
-  delete payload.badges;
-  delete payload.ctaButton;
-  delete payload.wishlistButton;
+  sanitizePayloadForBackend(payload);
 
   return { payload, errors: {} };
 }

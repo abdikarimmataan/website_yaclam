@@ -6,7 +6,6 @@ import { getHomeSectionsConfig } from "@/lib/api/home-sections.service";
 import { cmsUrl } from "@/lib/api/cms";
 import { sectionsFromConfig } from "@/lib/api/home-sections.defaults";
 import { SectionHeading } from "@/components/shared/section-heading";
-import { CourseCard } from "@/components/shared/course-card";
 import { RoadmapCard } from "@/components/shared/roadmap-card";
 import { api } from "@/api/http";
 import { getWhyYaclamCards } from "@/lib/api/why-yaclam.service";
@@ -14,7 +13,9 @@ import { getHomeRoadmaps } from "@/lib/api/roadmap.service";
 import { getHomeScholarships } from "@/lib/api/scholarship.service";
 import { getHomePractitioners } from "@/lib/api/practitioner.service";
 import { getHomeTestimonials } from "@/lib/api/testimonial.service";
-import { getHomeLatestCourses, HOME_LATEST_COURSES } from "@/lib/api/course.service";
+import { getHomeLatestCourses } from "@/lib/api/course.service";
+import { getCoursesDisplayStats } from "@/lib/api/course-display-stats";
+import { FeaturedCoursesCarousel } from "@/components/home/featured-courses-carousel";
 import { sortBySortOrder } from "@/lib/api/sort-order";
 import { firstParagraph } from "@/lib/utils";
 import { ScholarshipFlag } from "@/components/shared/scholarship-flag";
@@ -22,8 +23,8 @@ import { Icon } from "@/lib/icon-map";
 
 type FieldByCourse = {
   _id: string;
+  id?: string;
   name: string;
-  slug: string;
   icon: string;
   sortOrder: number;
   isVisible?: boolean;
@@ -56,17 +57,22 @@ export default async function Home() {
     getHomeSectionsConfig(),
   ]);
   const s = sectionsFromConfig(homeSections);
+  const featuredCardsPerPage = s.featured.cardNumberVisible;
 
   const [fields, featuredCoursesList, whyYaclamCards, homeRoadmaps, homeScholarships, homePractitioners, homeTestimonials] =
     await Promise.all([
     getFieldsByCourse(),
-    getHomeLatestCourses(HOME_LATEST_COURSES),
+    getHomeLatestCourses(Math.max(featuredCardsPerPage * 10, 12)),
     getWhyYaclamCards(),
     getHomeRoadmaps(),
     getHomeScholarships(),
     getHomePractitioners(),
     getHomeTestimonials(),
   ]);
+
+  const featuredStats = await getCoursesDisplayStats(
+    featuredCoursesList.map((c) => String(c.id))
+  );
 
   const fieldCards = fields.slice(0, s.field.cardNumberVisible);
   const whyYaclamCardList = whyYaclamCards.slice(0, s.whyYaclam.cardNumberVisible);
@@ -85,7 +91,7 @@ export default async function Home() {
         <SectionHeading center eyebrow={s.field.eyebrow} title={s.field.title} sub={s.field.subtitle} />
         <div className="mt-12 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
           {fieldCards.map((field) => (
-            <Link key={field._id} href={`/courses?cat=${field.slug}`} className="group rounded-2xl border border-line bg-white p-6 text-center transition-all duration-200 hover:-translate-y-1 hover:border-gold hover:shadow-soft">
+            <Link key={field.id ?? field._id} href={`/courses?cat=${field.id ?? field._id}`} className="group rounded-2xl border border-line bg-white p-6 text-center transition-all duration-200 hover:-translate-y-1 hover:border-gold hover:shadow-soft">
               <div className="mx-auto mb-3.5 grid h-[52px] w-[52px] place-items-center rounded-[14px] bg-surface text-royal transition group-hover:bg-navy group-hover:text-gold">
                 <Icon name={resolveFieldIcon(field.icon)} size={24} />
               </div>
@@ -113,11 +119,11 @@ export default async function Home() {
                 </Link>
               ) : null}
             </div>
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {featuredCoursesList.map((c) => (
-                <CourseCard key={c.id} c={c} />
-              ))}
-            </div>
+            <FeaturedCoursesCarousel
+              courses={featuredCoursesList}
+              cardsPerPage={featuredCardsPerPage}
+              stats={featuredStats}
+            />
           </div>
         </section>
       ) : null}

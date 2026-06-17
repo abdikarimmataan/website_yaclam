@@ -1,15 +1,11 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { performLogout } from "@/lib/auth/session";
 import { LogOut } from "lucide-react";
-import { clearSession } from "@/lib/auth/session";
 
 export function LogoutButton({ className }: { className?: string }) {
-  const router = useRouter();
-
   function handleLogout() {
-    clearSession();
-    router.replace("/login");
+    performLogout("/");
   }
 
   return (

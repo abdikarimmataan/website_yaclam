@@ -7,18 +7,21 @@ import {
   BarChart3,
   GraduationCap,
   Languages,
-  ShoppingCart,
-  Heart,
-  Play,
   CalendarClock,
   Award,
 } from "lucide-react";
 import { getCourseDetail } from "@/lib/api/course.service";
+import { getCourseRatings } from "@/lib/api/course-rating.service";
+import { getCourseEnrollmentCount } from "@/lib/api/course-enrollment.service";
+import { getCourseVideoHours } from "@/lib/api/course-video-hours.service";
 import { uploadUrl } from "@/lib/api/cms";
 import { categoryIcon } from "@/lib/data/categories";
 import { Icon } from "@/lib/icon-map";
-import { Stars } from "@/components/shared/stars";
+import { formatCourseHoursLabel } from "@/lib/utils";
+import { CourseDetailRatingBadge } from "@/components/courses/course-detail-rating-badge";
+import { CourseEnrollmentCount } from "@/components/courses/course-enrollment-count";
 import { CourseTabs } from "@/components/shared/course-tabs";
+import { CoursePurchaseActions } from "@/components/courses/course-purchase-actions";
 import {
   CoursePreviewVideo,
   type PreviewSampleVideo,
@@ -36,6 +39,14 @@ export default async function CourseDetail({ params }: { params: Promise<{ slug:
   if (!detail) notFound();
 
   const { course, modules } = detail;
+  const [ratingsData, enrollmentData, videoHoursData] = await Promise.all([
+    getCourseRatings(slug),
+    getCourseEnrollmentCount(slug),
+    getCourseVideoHours(slug),
+  ]);
+  const enrollmentCount = enrollmentData?.count ?? 0;
+  const durationHours = videoHoursData?.durationHours ?? 0;
+  const lessonCount = videoHoursData?.lessonCount ?? 0;
   const initials = course.instructor
     .split(" ")
     .map((word) => word[0])
@@ -70,9 +81,9 @@ export default async function CourseDetail({ params }: { params: Promise<{ slug:
   }
 
   const facts: [typeof Users, string, string][] = [
-    [Users, "Students", course.students.toLocaleString()],
+    [Users, "Students", enrollmentCount.toLocaleString()],
     [Languages, "Language", course.language],
-    [Clock, "Duration", course.hours ? `${course.hours} hours` : "—"],
+    [Clock, "Duration", formatCourseHoursLabel(durationHours)],
     [BarChart3, "Level", course.level],
     [CalendarClock, "Expiry Period", course.expiry],
     [Award, "Certificate", course.certificate ? "Yes" : "No"],
@@ -118,10 +129,11 @@ export default async function CourseDetail({ params }: { params: Promise<{ slug:
                 )}
                 <span className="font-semibold text-navy">{course.instructor}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Stars rating={course.rating} />
-                <span className="text-[13px] text-ink-3">({course.reviews})</span>
-              </div>
+              <CourseDetailRatingBadge
+                courseId={slug}
+                initialRating={ratingsData?.rating ?? 0}
+                initialReviewCount={ratingsData?.reviewCount ?? 0}
+              />
               <div className="flex items-center gap-2 text-[14px] text-ink-2">
                 <Languages size={16} className="text-ink-3" /> {course.language}
               </div>
@@ -131,18 +143,21 @@ export default async function CourseDetail({ params }: { params: Promise<{ slug:
               <span className="flex items-center gap-2">
                 <GraduationCap size={16} className="text-royal" /> Course Certificate
               </span>
+              <CourseEnrollmentCount courseId={slug} initialCount={enrollmentCount} />
               <span className="flex items-center gap-2">
-                <Users size={16} className="text-royal" />{" "}
-                {course.students.toLocaleString()} Enrolled Students
-              </span>
-              <span className="flex items-center gap-2">
-                <Clock size={16} className="text-royal" />{" "}
-                {course.hours ? `${course.hours} hours` : "—"}
+                <Clock size={16} className="text-royal" /> {formatCourseHoursLabel(durationHours)}
               </span>
             </div>
 
             <div className="mt-8">
-              <CourseTabs course={course} modules={modules} />
+              <CourseTabs
+                course={course}
+                modules={modules}
+                ratingsData={ratingsData}
+                enrollmentCount={enrollmentCount}
+                durationHours={durationHours}
+                lessonCount={lessonCount}
+              />
             </div>
           </div>
 
@@ -175,35 +190,7 @@ export default async function CourseDetail({ params }: { params: Promise<{ slug:
               </div>
 
               <div className="p-6">
-                <div className="mb-5 flex items-end gap-2">
-                  <span
-                    className={`font-display text-[34px] font-bold ${
-                      course.free ? "text-success" : "text-navy"
-                    }`}
-                  >
-                    {course.free ? "Free" : `$${course.price}`}
-                  </span>
-                  {!course.free && course.oldPrice && (
-                    <span className="mb-1.5 text-lg text-ink-3 line-through">
-                      ${course.oldPrice}
-                    </span>
-                  )}
-                </div>
-
-                <button type="button" className="btn btn-outline mb-2.5 w-full">
-                  <Heart size={16} /> Add to Wishlist
-                </button>
-                <Link href={`/learn/${course.slug}`} className="btn btn-gold w-full">
-                  {course.free ? (
-                    <>
-                      Start Learning <Play size={16} />
-                    </>
-                  ) : (
-                    <>
-                      Buy Now <ShoppingCart size={16} />
-                    </>
-                  )}
-                </Link>
+                <CoursePurchaseActions course={course} />
 
                 <div className="mt-6 flex flex-col">
                   {facts.map(([IconComponent, label, value]) => (
@@ -219,18 +206,6 @@ export default async function CourseDetail({ params }: { params: Promise<{ slug:
                   ))}
                 </div>
 
-                {!course.free && (
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {["WaafiPay", "EVC Plus", "Zaad", "PayPal", "Visa"].map((payment) => (
-                      <span
-                        key={payment}
-                        className="rounded-md bg-surface-2 px-2.5 py-1 text-[11px] font-bold text-ink-2"
-                      >
-                        {payment}
-                      </span>
-                    ))}
-                  </div>
-                )}
               </div>
             </div>
           </aside>

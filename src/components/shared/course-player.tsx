@@ -1,32 +1,51 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   ChevronLeft, ChevronDown, Play, CheckCircle2, Lock, Circle,
-  Star, Send, MessageSquare, FileText,
+  FileText,
 } from "lucide-react";
-import type { Course, Module } from "@/lib/types";
+import type { Course, CourseResource, Module } from "@/lib/types";
 import { VimeoPlayer } from "@/components/shared/vimeo-player";
+import { uploadUrl } from "@/lib/api/cms";
+import { CourseLearnDiscussion } from "@/components/courses/course-learn-discussion";
 import { cn } from "@/lib/utils";
 
 type FlatLesson = Module["lessons"][number] & { moduleIndex: number };
 
-const seedComments = [
-  { name: "Faadumo A.", date: "3 days ago", text: "Casharkan aad buu u fiicnaa! Tusaalaha mashruuca ayaa wax walba caddeeyay.", initials: "FA", likes: 12 },
-  { name: "Yuusuf M.", date: "1 week ago", text: "Quick question — can we get the source files for this lesson? Great explanation overall.", initials: "YM", likes: 4 },
-];
+function formatFileSize(bytes?: number) {
+  if (!bytes) return "";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
 
-export function CoursePlayer({ course, modules }: { course: Course; modules: Module[] }) {
+export function CoursePlayer({
+  course,
+  modules,
+  resources = [],
+}: {
+  course: Course;
+  modules: Module[];
+  resources?: CourseResource[];
+}) {
   const flat: FlatLesson[] = modules.flatMap((m, mi) => m.lessons.map((l) => ({ ...l, moduleIndex: mi })));
   const [activeId, setActiveId] = useState(flat[0]?.id);
   const [openModule, setOpenModule] = useState(0);
   const [completed, setCompleted] = useState<Set<string>>(new Set());
   const [tab, setTab] = useState<"overview" | "resources" | "comments">("overview");
+  const [videoFailed, setVideoFailed] = useState(false);
 
   const active = flat.find((l) => l.id === activeId) ?? flat[0];
   const activeIndex = flat.findIndex((l) => l.id === active.id);
   const progress = Math.round((completed.size / flat.length) * 100);
+  const vimeoId = String(active?.vimeoId ?? "").trim();
+  const videoSrc = uploadUrl(active?.videoUrl);
+  useEffect(() => {
+    // Reset fallback error when switching lessons.
+    setVideoFailed(false);
+  }, [active?.id, vimeoId, videoSrc]);
 
   const markDone = (id: string) =>
     setCompleted((prev) => {
@@ -48,7 +67,35 @@ export function CoursePlayer({ course, modules }: { course: Course; modules: Mod
       {/* MAIN: video + details + comments */}
       <main className="order-2 lg:order-1">
         <div className="bg-navy-deep px-4 py-4 sm:px-8 sm:py-6">
-          <VimeoPlayer vimeoId={active.vimeoId ?? ""} title={active.title} />
+          {vimeoId ? (
+            <VimeoPlayer vimeoId={vimeoId} title={active.title} />
+          ) : videoSrc && !videoFailed ? (
+            <div
+              className="relative w-full overflow-hidden rounded-2xl bg-black"
+              style={{ aspectRatio: "16 / 9" }}
+            >
+              <video
+                key={active.id}
+                src={videoSrc}
+                controls
+                playsInline
+                className="absolute inset-0 h-full w-full bg-black"
+                style={{ objectFit: "contain" }}
+                onError={() => setVideoFailed(true)}
+              />
+            </div>
+          ) : (
+            <div
+              className="relative w-full overflow-hidden rounded-2xl bg-black"
+              style={{ aspectRatio: "16 / 9" }}
+            >
+              <div className="absolute inset-0 flex items-center justify-center px-4 text-center text-white/90">
+                <span className="text-[14px] font-semibold">
+                  {videoSrc ? "Lesson video failed to load" : "Lesson video not available"}
+                </span>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="container max-w-none px-4 py-6 sm:px-8">
@@ -90,59 +137,92 @@ export function CoursePlayer({ course, modules }: { course: Course; modules: Mod
           <div className="py-6">
             {tab === "overview" && (
               <div className="max-w-2xl">
-                <h3 className="mb-2 text-[18px] font-bold text-navy">About this lesson</h3>
+                <h3 className="mb-2 text-[18px] font-bold text-navy">
+                  {course.overviewHeadline?.trim() || "About this course"}
+                </h3>
                 <p className="text-[15.5px] leading-[1.8] text-ink-2">
-                  In this lesson we cover <b>{active.title.toLowerCase()}</b> with a hands-on, practical approach.
-                  Follow along, pause where you need to, and rewatch any section. Everything is explained in Somali
-                  with the English technical terms you&apos;ll see on the job.
+                  {course.description?.trim() ||
+                    `In this lesson we cover ${active.title.toLowerCase()} with a hands-on, practical approach.`}
                 </p>
-                <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                  {["Practical, project-based teaching", "Somali narration, English terms", "Lifetime access & rewatch", "Downloadable resources"].map((x) => (
-                    <div key={x} className="flex items-center gap-2.5 rounded-xl border border-line bg-surface px-4 py-3 text-[14px] text-ink-2"><CheckCircle2 size={17} className="shrink-0 text-success" /> {x}</div>
-                  ))}
-                </div>
+                {course.outcomes.length > 0 ? (
+                  <>
+                    <h4 className="mb-3 mt-6 text-[16px] font-bold text-navy">What you&apos;ll master</h4>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {course.outcomes.map((outcome) => (
+                        <div
+                          key={outcome}
+                          className="flex items-center gap-2.5 rounded-xl border border-line bg-surface px-4 py-3 text-[14px] text-ink-2"
+                        >
+                          <CheckCircle2 size={17} className="shrink-0 text-success" /> {outcome}
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                    {[
+                      `Lesson: ${active.title}`,
+                      course.language ? `Language: ${course.language}` : "Somali narration, English terms",
+                      course.certificate ? "Course certificate included" : "Certificate not included",
+                      course.expiry ? `Access: ${course.expiry}` : "Lifetime access & rewatch",
+                    ].map((item) => (
+                      <div
+                        key={item}
+                        className="flex items-center gap-2.5 rounded-xl border border-line bg-surface px-4 py-3 text-[14px] text-ink-2"
+                      >
+                        <CheckCircle2 size={17} className="shrink-0 text-success" /> {item}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
             {tab === "resources" && (
               <div className="max-w-2xl">
-                <h3 className="mb-3 text-[18px] font-bold text-navy">Lesson resources</h3>
-                <div className="flex flex-col gap-2.5">
-                  {["Lesson slides (PDF)", "Starter project files (ZIP)", "Exercise solutions"].map((r) => (
-                    <a key={r} href="#" className="flex items-center justify-between rounded-xl border border-line bg-white px-4 py-3.5 text-[14.5px] text-ink-2 transition hover:border-royal">
-                      <span className="flex items-center gap-2.5"><FileText size={17} className="text-royal" /> {r}</span>
-                      <span className="text-[13px] font-semibold text-royal">Download</span>
-                    </a>
-                  ))}
-                </div>
-                <p className="mt-4 text-[12px] text-ink-3">Resource files wire to Cloudflare R2 / your storage on the backend.</p>
+                <h3 className="mb-3 text-[18px] font-bold text-navy">Course resources</h3>
+                {resources.length === 0 ? (
+                  <p className="text-[14px] text-ink-3">No downloadable resources have been added yet.</p>
+                ) : (
+                  <div className="flex flex-col gap-2.5">
+                    {resources.map((resource) => {
+                      const href = uploadUrl(resource.fileUrl);
+                      const sizeLabel = formatFileSize(resource.fileSize);
+                      return (
+                        <a
+                          key={resource.id}
+                          href={href ?? "#"}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={cn(
+                            "flex items-center justify-between gap-3 rounded-xl border border-line bg-white px-4 py-3.5 text-[14.5px] text-ink-2 transition hover:border-royal",
+                            !href && "pointer-events-none opacity-60"
+                          )}
+                        >
+                          <span className="min-w-0">
+                            <span className="flex items-center gap-2.5">
+                              <FileText size={17} className="shrink-0 text-royal" />
+                              <span className="font-medium text-navy">{resource.title}</span>
+                            </span>
+                            {resource.description ? (
+                              <span className="mt-1 block pl-[27px] text-[13px] text-ink-3">
+                                {resource.description}
+                              </span>
+                            ) : null}
+                          </span>
+                          <span className="shrink-0 text-right text-[13px] font-semibold text-royal">
+                            {sizeLabel ? `${sizeLabel} · ` : ""}Download
+                          </span>
+                        </a>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
 
             {tab === "comments" && (
-              <div className="max-w-2xl">
-                <h3 className="mb-4 flex items-center gap-2 text-[18px] font-bold text-navy"><MessageSquare size={19} /> Discussion ({seedComments.length})</h3>
-                <div className="mb-6 rounded-2xl border border-line bg-surface p-4">
-                  <textarea rows={3} placeholder="Ask a question or share your thoughts…" className="field-input resize-none bg-white" />
-                  <div className="mt-3 flex justify-end"><button className="btn btn-navy btn-sm">Post comment <Send size={14} /></button></div>
-                </div>
-                <div className="flex flex-col gap-4">
-                  {seedComments.map((c) => (
-                    <div key={c.name} className="rounded-2xl border border-line bg-white p-4">
-                      <div className="mb-2 flex items-center gap-3">
-                        <div className="grid h-9 w-9 place-items-center rounded-full bg-navy text-[13px] font-bold text-gold">{c.initials}</div>
-                        <div><div className="text-[14px] font-bold text-navy">{c.name}</div><div className="text-[12px] text-ink-3">{c.date}</div></div>
-                      </div>
-                      <p className="text-[14.5px] text-ink-2">{c.text}</p>
-                      <div className="mt-2.5 flex gap-4 text-[13px] text-ink-3">
-                        <button className="flex items-center gap-1.5 hover:text-royal"><Star size={14} /> {c.likes}</button>
-                        <button className="hover:text-royal">Reply</button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <p className="mt-4 text-[12px] text-ink-3">Comments/reviews wire to your backend (PostgreSQL).</p>
-              </div>
+              <CourseLearnDiscussion courseId={String(course.id)} lessonId={active.id} />
             )}
           </div>
         </div>

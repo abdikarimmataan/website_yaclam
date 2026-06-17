@@ -3,7 +3,7 @@
 import { useAuthSession } from "@/components/auth/use-auth-session";
 
 export function InstructorTokenPanel() {
-  const session = useAuthSession();
+  const { session } = useAuthSession();
 
   return (
     <div className="space-y-2">
