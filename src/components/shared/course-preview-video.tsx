@@ -335,7 +335,7 @@ export function CoursePreviewVideo({
     if (video.readyState >= 2) play();
     else video.addEventListener("loadeddata", play, { once: true });
     return () => video.removeEventListener("loadeddata", play);
-  }, [open, active?.src]);
+  }, [open, active]);
 
   if (!samples.length || !active) return null;
 

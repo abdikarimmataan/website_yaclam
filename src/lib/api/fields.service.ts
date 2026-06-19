@@ -26,23 +26,24 @@ export async function getCourseFields(): Promise<CourseFieldOption[]> {
       auth: false,
     });
     if (!Array.isArray(data)) return [];
+    const options = data
+      .filter((row) => row.isVisible !== false)
+      .map((row) => {
+        const id = String(row.id ?? row._id ?? "").trim();
+        const name = String(row.name ?? "").trim();
+        if (!id || !name) return null;
+        return {
+          id,
+          name,
+          slug: slugify(name),
+          icon: row.icon?.trim() || undefined,
+          courseCount: Number(row.courseCount) || 0,
+        };
+      })
+      .filter((row) => row != null) as CourseFieldOption[];
     return sortBySortOrder(
-      data
-        .filter((row) => row.isVisible !== false)
-        .map((row) => {
-          const id = String(row.id ?? row._id ?? "").trim();
-          const name = String(row.name ?? "").trim();
-          if (!id || !name) return null;
-          return {
-            id,
-            name,
-            slug: slugify(name),
-            icon: row.icon?.trim() || undefined,
-            courseCount: Number(row.courseCount) || 0,
-          };
-        })
-        .filter((row): row is CourseFieldOption => row != null)
-    );
+      options as Array<CourseFieldOption & { sortOrder?: number }>
+    ) as CourseFieldOption[];
   } catch {
     return [];
   }

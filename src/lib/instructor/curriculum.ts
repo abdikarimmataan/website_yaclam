@@ -92,7 +92,10 @@ export function buildCurriculumPayload(curriculum: CourseModule[]): {
   const sanitized = sanitizeCurriculumForApi(
     curriculum.map((mod) => ({
       ...mod,
-      lessons: (mod.lessons ?? []).map(({ pendingVideoFile: _pending, ...lesson }) => lesson),
+      lessons: (mod.lessons ?? []).map((lesson) => {
+        const { pendingVideoFile: _pending, ...rest } = lesson as CourseLessonFormRow;
+        return rest;
+      }),
     }))
   );
 

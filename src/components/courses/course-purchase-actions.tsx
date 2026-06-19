@@ -19,6 +19,7 @@ type Props = {
 };
 
 export function CoursePurchaseActions({ course }: Props) {
+  const courseId = String(course.id);
   const router = useRouter();
   const [wishlisted, setWishlisted] = useState(false);
   const [owned, setOwned] = useState(false);
@@ -38,8 +39,8 @@ export function CoursePurchaseActions({ course }: Props) {
     (async () => {
       try {
         const [saved, purchased] = await Promise.all([
-          isCourseInWishlist(course.id),
-          hasPurchasedCourse(course.id),
+          isCourseInWishlist(courseId),
+          hasPurchasedCourse(courseId),
         ]);
         if (!cancelled) {
           setWishlisted(saved);
@@ -55,7 +56,7 @@ export function CoursePurchaseActions({ course }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [course.id]);
+  }, [courseId]);
 
   function requireLogin(): boolean {
     const session = readSession();
@@ -72,11 +73,11 @@ export function CoursePurchaseActions({ course }: Props) {
     setBusy(true);
     try {
       if (wishlisted) {
-        await removeFromWishlist(course.id);
+        await removeFromWishlist(courseId);
         setWishlisted(false);
         toast.success("Removed from wishlist");
       } else {
-        await addToWishlist(course.id);
+        await addToWishlist(courseId);
         setWishlisted(true);
         toast.success("Added to wishlist");
       }
@@ -91,7 +92,7 @@ export function CoursePurchaseActions({ course }: Props) {
     if (!requireLogin()) return;
     setBusy(true);
     try {
-      await enrollFreeCourse(course.id);
+      await enrollFreeCourse(courseId);
       setOwned(true);
       toast.success("Enrolled successfully");
       router.push(`/learn/${course.slug}`);
@@ -110,7 +111,7 @@ export function CoursePurchaseActions({ course }: Props) {
     }
     setBusy(true);
     try {
-      const result = await payForCourse(phone.trim(), course.id);
+      const result = await payForCourse(phone.trim(), courseId);
       setOwned(true);
       setShowPay(false);
       toast.success(result.message || "Payment successful");
