@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { FormEvent, Suspense, useState } from "react";
 import { ArrowRight, BookOpen, GraduationCap, Loader2 } from "lucide-react";
 import { AuthArt } from "@/components/shared/auth-art";
 import { PasswordInput } from "@/components/shared/password-input";
@@ -18,6 +18,26 @@ const roles: { id: AuthRole; label: string; hint: string; icon: typeof Graduatio
 ];
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={<LoginPageFallback />}>
+      <LoginPageContent />
+    </Suspense>
+  );
+}
+
+function LoginPageFallback() {
+  return (
+    <div className="grid min-h-[calc(100vh-72px)] lg:grid-cols-2">
+      <AuthArt login />
+      <div className="mx-auto flex w-full max-w-md flex-col justify-center p-10 sm:p-16">
+        <h1 className="mb-2 text-3xl font-semibold text-navy">Log in</h1>
+        <p className="text-ink-3">Loading…</p>
+      </div>
+    </div>
+  );
+}
+
+function LoginPageContent() {
   const searchParams = useSearchParams();
   const [role, setRole] = useState<AuthRole>("student");
   const [email, setEmail] = useState("");

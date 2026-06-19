@@ -63,7 +63,7 @@ export function CourseCard({
             {c.badge}
           </span>
         )}
-        <WishlistHeartButton courseId={c.id} />
+        <WishlistHeartButton courseId={String(c.id)} />
       </div>
       <div className="flex flex-1 flex-col gap-2 p-[18px]">
         <span className="pill">{c.level}</span>
