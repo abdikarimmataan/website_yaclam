@@ -2,6 +2,7 @@ import { COURSE_FORM_FIELDS } from "@/lib/instructor/course-form-config";
 import type { CourseModule } from "@/lib/instructor/course-types";
 import type { CourseApiRecord } from "@/lib/api/course.types";
 import type { FormField } from "@/lib/instructor/course-types";
+import { resolveLessonType } from "@/lib/lesson-media";
 
 function emptyFormValues(): Record<string, unknown> {
   const form: Record<string, unknown> = {};
@@ -38,12 +39,15 @@ export function sanitizeCurriculumForApi(curriculum: unknown): CourseModule[] {
         .map((lesson, lessonIndex) => {
           const lessonTitle = String(lesson.title ?? "").trim();
           if (!lessonTitle) return null;
+          const lessonType = resolveLessonType(lesson);
           return {
             id: String(lesson.id ?? `lesson-${moduleIndex + 1}-${lessonIndex + 1}`).trim(),
             title: lessonTitle,
             duration: String(lesson.duration ?? ""),
             free: !!lesson.free,
-            videoUrl: String(lesson.videoUrl ?? ""),
+            lessonType,
+            videoUrl: lessonType === "video" ? String(lesson.videoUrl ?? "") : "",
+            linkUrl: lessonType === "link" ? String(lesson.linkUrl ?? "").trim() : "",
             vimeoId: String(lesson.vimeoId ?? ""),
             sortOrder: Number.isFinite(Number(lesson.sortOrder)) ? Number(lesson.sortOrder) : lessonIndex,
             isVisible: lesson.isVisible !== false,

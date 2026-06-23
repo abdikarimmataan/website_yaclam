@@ -8,11 +8,14 @@ import type { Course } from "@/lib/types";
 import { readSession } from "@/lib/auth/session";
 import { enrollFreeCourse, hasPurchasedCourse } from "@/lib/api/purchase.service";
 import { addToWishlist, isCourseInWishlist, removeFromWishlist } from "@/lib/api/wishlist.service";
-import { payForCourse } from "@/lib/api/payment.service";
+import { getPaymentMethods, payForCourse, type PaymentMethodOption } from "@/lib/api/payment.service";
+import {
+  PaymentMethodPicker,
+  type PaymentMethodId,
+} from "@/components/courses/payment-method-picker";
+import { StripeCardForm } from "@/components/courses/stripe-card-form";
 import { toast } from "@/lib/utils/toast";
 import { formatCoursePrice } from "@/lib/utils";
-
-const PAYMENT_METHODS = ["WaafiPay", "EVC Plus", "Zaad", "PayPal", "Visa"];
 
 type Props = {
   course: Course;
@@ -27,6 +30,10 @@ export function CoursePurchaseActions({ course }: Props) {
   const [busy, setBusy] = useState(false);
   const [showPay, setShowPay] = useState(false);
   const [phone, setPhone] = useState("");
+  const [methods, setMethods] = useState<PaymentMethodOption[]>([]);
+  const [stripePublicKey, setStripePublicKey] = useState<string | null>(null);
+  const [methodsLoading, setMethodsLoading] = useState(false);
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethodId | null>(null);
 
   useEffect(() => {
     const session = readSession();
@@ -58,6 +65,30 @@ export function CoursePurchaseActions({ course }: Props) {
     };
   }, [courseId]);
 
+  useEffect(() => {
+    if (!showPay) return;
+
+    let cancelled = false;
+    setMethodsLoading(true);
+    getPaymentMethods()
+      .then(({ methods: items, stripePublicKey: publicKey }) => {
+        if (cancelled) return;
+        setMethods(items);
+        setStripePublicKey(publicKey);
+        setSelectedMethod(items[0]?.id ?? null);
+      })
+      .catch(() => {
+        if (!cancelled) setMethods([]);
+      })
+      .finally(() => {
+        if (!cancelled) setMethodsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [showPay]);
+
   function requireLogin(): boolean {
     const session = readSession();
     if (!session?.accessToken || session.role !== "student") {
@@ -66,6 +97,12 @@ export function CoursePurchaseActions({ course }: Props) {
       return false;
     }
     return true;
+  }
+
+  function closeCheckout() {
+    setShowPay(false);
+    setPhone("");
+    setSelectedMethod(null);
   }
 
   async function handleWishlist() {
@@ -103,7 +140,16 @@ export function CoursePurchaseActions({ course }: Props) {
     }
   }
 
-  async function handlePay() {
+  function goAfterPurchase(message?: string) {
+    toast.success(message || "Payment successful — you now own this course.");
+    if (course.lessons > 0) {
+      router.push(`/learn/${course.slug}`);
+      return;
+    }
+    router.push(`/courses/${course.slug}?purchased=1`);
+  }
+
+  async function handleWaafiPay() {
     if (!requireLogin()) return;
     if (!phone.trim()) {
       toast.error("Enter your EVC Plus mobile number");
@@ -113,9 +159,8 @@ export function CoursePurchaseActions({ course }: Props) {
     try {
       const result = await payForCourse(phone.trim(), courseId);
       setOwned(true);
-      setShowPay(false);
-      toast.success(result.message || "Payment successful");
-      router.push(`/learn/${course.slug}`);
+      closeCheckout();
+      goAfterPurchase(result.message || "Payment successful");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Payment failed");
     } finally {
@@ -123,11 +168,34 @@ export function CoursePurchaseActions({ course }: Props) {
     }
   }
 
+  async function handleCardPaymentSuccess() {
+    setOwned(true);
+    closeCheckout();
+    goAfterPurchase();
+  }
+
+  function handleCardPaymentError(message: string) {
+    toast.error(message);
+  }
+
   if (owned) {
+    if (course.lessons > 0) {
+      return (
+        <div>
+          <Link href={`/learn/${course.slug}`} className="btn btn-gold w-full">
+            <Play size={16} /> Start Learning
+          </Link>
+        </div>
+      );
+    }
+
     return (
-      <div>
-        <Link href={`/learn/${course.slug}`} className="btn btn-gold w-full">
-          <Play size={16} /> Start Learning
+      <div className="space-y-2.5">
+        <div className="rounded-xl border border-success/30 bg-success/5 px-4 py-3 text-[13px] leading-relaxed text-ink-2">
+          You own this course. Lessons are not published yet — check back soon or visit My Courses.
+        </div>
+        <Link href="/dashboard/courses" className="btn btn-gold w-full">
+          <Play size={16} /> My Courses
         </Link>
       </div>
     );
@@ -166,38 +234,66 @@ export function CoursePurchaseActions({ course }: Props) {
           Start Learning
         </button>
       ) : showPay ? (
-        <div className="space-y-2.5">
-          <input
-            type="tel"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            placeholder="EVC Plus number (e.g. 0612345678)"
-            className="w-full rounded-xl border border-line px-4 py-3 text-[14px] outline-none focus:border-royal"
+        <div className="space-y-4 rounded-2xl border border-line bg-white p-4 shadow-[0_8px_30px_rgba(13,27,75,0.06)]">
+          <PaymentMethodPicker
+            methods={methods}
+            selected={selectedMethod}
+            onSelect={setSelectedMethod}
+            loading={methodsLoading}
           />
-          <button type="button" className="btn btn-gold w-full" onClick={handlePay} disabled={busy}>
-            {busy ? <Loader2 size={16} className="animate-spin" /> : "Pay with EVC Plus"}
-          </button>
-          <button type="button" className="btn btn-outline w-full" onClick={() => setShowPay(false)} disabled={busy}>
+
+          {selectedMethod === "waafipay" ? (
+            <div className="space-y-2.5 border-t border-surface-2 pt-4">
+              <label className="block text-[12px] font-semibold uppercase tracking-[0.12em] text-ink-3">
+                Mobile wallet number
+              </label>
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="EVC Plus number (e.g. 0612345678)"
+                className="w-full rounded-xl border border-line px-4 py-3 text-[14px] outline-none focus:border-royal focus:ring-2 focus:ring-royal/15"
+              />
+              <button type="button" className="btn btn-gold w-full" onClick={handleWaafiPay} disabled={busy}>
+                {busy ? <Loader2 size={16} className="animate-spin" /> : "Pay with WaafiPay"}
+              </button>
+            </div>
+          ) : null}
+
+          {selectedMethod === "stripe" && stripePublicKey ? (
+            <div className="border-t border-surface-2 pt-4">
+              <StripeCardForm
+                publishableKey={stripePublicKey}
+                courseId={courseId}
+                disabled={busy}
+                onSuccess={handleCardPaymentSuccess}
+                onError={handleCardPaymentError}
+              />
+            </div>
+          ) : null}
+
+          {selectedMethod === "stripe" && !stripePublicKey ? (
+            <p className="border-t border-surface-2 pt-4 text-[13px] text-ink-3">
+              Card payments are not available right now.
+            </p>
+          ) : null}
+
+          <button type="button" className="btn btn-outline w-full" onClick={closeCheckout} disabled={busy}>
             Cancel
           </button>
         </div>
       ) : (
-        <button type="button" className="btn btn-gold w-full" onClick={() => setShowPay(true)} disabled={busy}>
+        <button
+          type="button"
+          className="btn btn-gold w-full"
+          onClick={() => {
+            if (!requireLogin()) return;
+            setShowPay(true);
+          }}
+          disabled={busy}
+        >
           <ShoppingCart size={16} /> Buy Now
         </button>
-      )}
-
-      {!course.free && (
-        <div className="mt-4 flex flex-wrap gap-2">
-          {PAYMENT_METHODS.map((payment) => (
-            <span
-              key={payment}
-              className="rounded-md bg-surface-2 px-2.5 py-1 text-[11px] font-bold text-ink-2"
-            >
-              {payment}
-            </span>
-          ))}
-        </div>
       )}
     </div>
   );

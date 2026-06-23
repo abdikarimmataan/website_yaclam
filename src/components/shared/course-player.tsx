@@ -3,12 +3,13 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
-  ChevronLeft, ChevronDown, Play, CheckCircle2, Lock, Circle,
+  ChevronLeft, ChevronDown, Play, CheckCircle2, Lock, Circle, Link2,
   FileText,
 } from "lucide-react";
 import type { Course, CourseResource, Module } from "@/lib/types";
 import { VimeoPlayer } from "@/components/shared/vimeo-player";
 import { uploadUrl } from "@/lib/api/cms";
+import { resolveLessonType } from "@/lib/lesson-media";
 import { CourseLearnDiscussion } from "@/components/courses/course-learn-discussion";
 import { cn } from "@/lib/utils";
 
@@ -38,12 +39,14 @@ export function CoursePlayer({
   const [videoFailed, setVideoFailed] = useState(false);
 
   const active = flat.find((l) => l.id === activeId) ?? flat[0];
-  const activeIndex = flat.findIndex((l) => l.id === active.id);
-  const progress = Math.round((completed.size / flat.length) * 100);
+  const activeIndex = active ? flat.findIndex((l) => l.id === active.id) : -1;
+  const progress = flat.length > 0 ? Math.round((completed.size / flat.length) * 100) : 0;
   const vimeoId = String(active?.vimeoId ?? "").trim();
   const videoSrc = uploadUrl(active?.videoUrl);
+  const isLinkLesson = active ? resolveLessonType(active) === "link" : false;
+  const linkUrl = String(active?.linkUrl ?? "").trim();
+
   useEffect(() => {
-    // Reset fallback error when switching lessons.
     setVideoFailed(false);
   }, [active?.id, vimeoId, videoSrc]);
 
@@ -62,12 +65,46 @@ export function CoursePlayer({
     }
   };
 
+  if (!active) {
+    return (
+      <div className="container flex min-h-[50vh] flex-col items-center justify-center px-4 py-16 text-center">
+        <h1 className="font-display text-2xl font-bold text-navy">{course.title}</h1>
+        <p className="mt-3 max-w-md text-[15px] text-ink-3">
+          This course does not have any lessons published yet. Please check back later or contact the instructor.
+        </p>
+        <Link href={`/courses/${course.slug}`} className="btn btn-outline mt-8">
+          Back to course
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div className="grid min-h-[calc(100vh-72px)] lg:grid-cols-[1fr_360px]">
       {/* MAIN: video + details + comments */}
       <main className="order-2 lg:order-1">
         <div className="bg-navy-deep px-4 py-4 sm:px-8 sm:py-6">
-          {vimeoId ? (
+          {isLinkLesson && linkUrl ? (
+            <div
+              className="relative w-full overflow-hidden rounded-2xl bg-black"
+              style={{ aspectRatio: "16 / 9" }}
+            >
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 px-4 text-center">
+                <Link2 size={40} className="text-gold" />
+                <p className="max-w-md text-[14px] text-white/80">
+                  This lesson opens an external video in a new browser tab.
+                </p>
+                <a
+                  href={linkUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-gold"
+                >
+                  Open Link
+                </a>
+              </div>
+            </div>
+          ) : vimeoId ? (
             <VimeoPlayer vimeoId={vimeoId} title={active.title} />
           ) : videoSrc && !videoFailed ? (
             <div
@@ -251,6 +288,7 @@ export function CoursePlayer({
                   {m.lessons.map((l) => {
                     const isActive = l.id === active.id;
                     const done = completed.has(l.id);
+                    const isLink = resolveLessonType(l) === "link";
                     return (
                       <button
                         key={l.id}
@@ -258,11 +296,28 @@ export function CoursePlayer({
                         className={cn("flex w-full items-start gap-3 px-5 py-2.5 text-left transition", isActive ? "bg-surface-2" : "hover:bg-surface")}
                       >
                         <span className="mt-0.5 shrink-0">
-                          {done ? <CheckCircle2 size={17} className="text-success" /> : isActive ? <Play size={16} className="text-royal" /> : l.free ? <Circle size={16} className="text-ink-3" /> : <Lock size={14} className="text-ink-3" />}
+                          {done ? (
+                            <CheckCircle2 size={17} className="text-success" />
+                          ) : isActive ? (
+                            isLink ? (
+                              <Link2 size={16} className="text-royal" />
+                            ) : (
+                              <Play size={16} className="text-royal" />
+                            )
+                          ) : l.free ? (
+                            <Circle size={16} className="text-ink-3" />
+                          ) : (
+                            <Lock size={14} className="text-ink-3" />
+                          )}
                         </span>
                         <span className="flex-1">
-                          <span className={cn("block text-[13.5px] leading-snug", isActive ? "font-semibold text-navy" : "text-ink-2")}>{l.title}</span>
-                          <span className="text-[12px] text-ink-3">{l.duration}</span>
+                          <span className={cn("block text-[13.5px] leading-snug", isActive ? "font-semibold text-navy" : "text-ink-2")}>
+                            {l.title}
+                          </span>
+                          <span className="text-[12px] text-ink-3">
+                            {isLink ? "Link" : "Video"}
+                            {l.duration ? ` · ${l.duration}` : ""}
+                          </span>
                         </span>
                       </button>
                     );

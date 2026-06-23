@@ -54,8 +54,10 @@ export interface Lesson {
   id: string;
   title: string;
   duration: string; // e.g. "08:24"
+  lessonType?: "video" | "link";
   vimeoId?: string;
   videoUrl?: string;
+  linkUrl?: string;
   free?: boolean;
 }
 

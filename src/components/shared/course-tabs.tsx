@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, Play, Lock, CheckCircle2 } from "lucide-react";
+import { ChevronDown, Play, Lock, CheckCircle2, Link2 } from "lucide-react";
 import type { Course, Module } from "@/lib/types";
 import type { CourseRatingsResponse } from "@/lib/api/course-rating.service";
 import { uploadUrl } from "@/lib/api/cms";
+import { resolveLessonType } from "@/lib/lesson-media";
 import { CourseReviewsTab } from "@/components/courses/course-reviews-tab";
 import { cn, formatCourseHoursLabel } from "@/lib/utils";
 
@@ -82,15 +83,29 @@ export function CourseTabs({
               </button>
               {open === i && (
                 <div className="px-5 pb-3.5 pt-1.5">
-                  {m.lessons.map((l) => (
+                  {m.lessons.map((l) => {
+                    const isLink = resolveLessonType(l) === "link";
+                    return (
                     <div key={l.id} className="flex items-center justify-between gap-3 py-2.5 text-[14px] text-ink-2">
                       <span className="flex items-center gap-2.5">
-                        {l.free ? <Play size={15} className="text-royal" /> : <Lock size={14} className="text-ink-3" />}
+                        {l.free ? (
+                          isLink ? (
+                            <Link2 size={15} className="text-royal" />
+                          ) : (
+                            <Play size={15} className="text-royal" />
+                          )
+                        ) : (
+                          <Lock size={14} className="text-ink-3" />
+                        )}
                         {l.title}
+                        <span className="rounded bg-surface-2 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink-3">
+                          {isLink ? "Link" : "Video"}
+                        </span>
                       </span>
                       <span className="shrink-0 text-[13px] text-ink-3">{l.duration}</span>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>

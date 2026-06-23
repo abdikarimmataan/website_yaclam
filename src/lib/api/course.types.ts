@@ -11,7 +11,9 @@ export type CourseLessonApiRecord = {
   title?: string;
   duration?: string;
   free?: boolean;
+  lessonType?: "video" | "link";
   videoUrl?: string;
+  linkUrl?: string;
   vimeoId?: string;
   sortOrder?: number;
   isVisible?: boolean;

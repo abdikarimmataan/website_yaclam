@@ -1,4 +1,4 @@
-import { readSession } from "@/lib/auth/session";
+import { clearSession, readSession } from "@/lib/auth/session";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:9000/api";
 
@@ -23,6 +23,18 @@ async function request<T>(endpoint: string, options?: RequestOpts): Promise<T> {
     const body = await res.json().catch(() => ({}));
     const message =
       typeof body?.message === "string" ? body.message : res.statusText || "Request failed";
+
+    if (res.status === 401 && typeof window !== "undefined") {
+      const path = window.location.pathname;
+      const hadSession = Boolean(readSession());
+      clearSession();
+      const needsLogin =
+        hadSession || path.startsWith("/dashboard") || path.startsWith("/instructor");
+      if (needsLogin && !path.startsWith("/login") && !path.startsWith("/register")) {
+        window.location.replace(`/login?next=${encodeURIComponent(path)}`);
+      }
+    }
+
     throw new Error(message);
   }
   if (res.status === 204) return undefined as T;
