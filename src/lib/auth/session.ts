@@ -1,9 +1,11 @@
 import type { AuthRole, AuthSession } from "@/lib/api/auth.types";
+import { isAccessTokenExpired } from "@/lib/auth/token-expiry";
 
 const STORAGE_KEY = "yaclam_session";
 const AUTH_COOKIE = "yaclam_auth";
 const ROLE_COOKIE = "yaclam_role";
-const MAX_AGE = 60 * 60 * 24 * 7;
+/** Match backend ACCESS_TOKEN_EXPIRES (3 minutes). */
+const MAX_AGE = 60 * 3;
 
 export const AUTH_SESSION_EVENT = "yaclam:auth-changed";
 
@@ -31,6 +33,10 @@ export function readSession(): AuthSession | null {
     if (!raw) return null;
     const parsed = JSON.parse(raw) as AuthSession;
     if (!parsed?.accessToken) return null;
+    if (isAccessTokenExpired(parsed.accessToken)) {
+      clearSession();
+      return null;
+    }
     return parsed;
   } catch {
     return null;

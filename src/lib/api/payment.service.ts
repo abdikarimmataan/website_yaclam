@@ -45,6 +45,53 @@ export async function payForCourse(phone: string, courseId: string): Promise<Pay
   return api.post<PaymentResult>(`${BASE}/pay`, { phone, courseId });
 }
 
+export type PaymentMethodOption = {
+  id: "waafipay" | "stripe";
+  label: string;
+  description: string;
+};
+
+export type PaymentMethodsResponse = {
+  methods: PaymentMethodOption[];
+  stripePublicKey: string | null;
+};
+
+export async function getPaymentMethods(): Promise<PaymentMethodsResponse> {
+  const res = await api.get<{ methods?: PaymentMethodOption[]; stripePublicKey?: string | null }>(
+    `${BASE}/methods`
+  );
+  return {
+    methods: Array.isArray(res?.methods) ? res.methods : [],
+    stripePublicKey: res?.stripePublicKey ?? null,
+  };
+}
+
+export async function createStripeIntent(
+  courseId: string
+): Promise<{ clientSecret: string; paymentIntentId: string }> {
+  return api.post<{ clientSecret: string; paymentIntentId: string }>(`${BASE}/stripe/intent`, {
+    courseId,
+  });
+}
+
+export async function confirmStripePayment(paymentIntentId: string): Promise<PaymentResult> {
+  return api.post<PaymentResult>(`${BASE}/stripe/confirm`, { paymentIntentId });
+}
+
+export async function createStripeCheckout(
+  courseId: string,
+  cancelUrl: string
+): Promise<{ checkoutUrl: string; sessionId: string }> {
+  return api.post<{ checkoutUrl: string; sessionId: string }>(`${BASE}/stripe/checkout`, {
+    courseId,
+    cancelUrl,
+  });
+}
+
+export async function confirmStripeCheckout(sessionId: string): Promise<PaymentResult> {
+  return api.post<PaymentResult>(`${BASE}/stripe/confirm`, { sessionId });
+}
+
 export async function getMyTransactions(page = 1, pageSize = 50): Promise<TransactionRecord[]> {
   try {
     const res = await api.get<PaginatedTransactions | { message?: string }>(

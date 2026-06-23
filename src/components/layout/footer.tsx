@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { Facebook, Youtube, Instagram, Twitter, Linkedin } from "lucide-react";
+import { SiteLogo } from "@/components/layout/site-logo";
 import { cmsUrl } from "@/lib/api/cms";
 import type { FooterViewModel } from "@/lib/api/footer.defaults";
+import type { SiteSettings } from "@/lib/api/settings.types";
 
 const SOCIAL_KEYS = [
   { key: "facebook" as const, Icon: Facebook, label: "Facebook" },
@@ -11,25 +13,33 @@ const SOCIAL_KEYS = [
   { key: "instagram" as const, Icon: Instagram, label: "Instagram" },
 ];
 
-export function Footer({ data }: { data: FooterViewModel }) {
+export function Footer({
+  data,
+  settings,
+}: {
+  data: FooterViewModel;
+  settings?: SiteSettings | null;
+}) {
   const logoText = data.logo.text;
-  const showLogo = data.logo.isVisible && logoText?.isVisible !== false;
+  const showFooterTextLogo = data.logo.isVisible && logoText?.isVisible !== false;
+  const settingsPicture =
+    settings?.logo?.isVisible !== false &&
+    settings?.logo?.picture?.isVisible !== false &&
+    settings?.logo?.picture?.light?.trim();
+  const showLogo = Boolean(showFooterTextLogo || settingsPicture);
 
   return (
     <footer className="bg-navy-deep pb-7 pt-16 text-white/65">
       <div className="container">
         <div className="mb-12 grid gap-10 md:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr]">
           <div>
-            {showLogo && logoText ? (
-              <Link href="/" className="mb-3.5 flex items-center gap-2.5 text-[22px] font-extrabold text-white">
-                <span className="ar grid h-9 w-9 place-items-center rounded-[11px] bg-gradient-to-br from-royal to-navy text-[20px] text-gold">
-                  {logoText.mark}
-                </span>
-                <span>
-                  {logoText.name}
-                  <span className="text-gold">{logoText.highlight}</span>
-                </span>
-              </Link>
+            {showLogo ? (
+              <SiteLogo
+                settings={settings}
+                fallbackText={logoText}
+                variant="footer"
+                className="mb-3.5"
+              />
             ) : null}
             <p className="max-w-xs text-[14.5px] leading-7">{data.description}</p>
             <div className="mt-4 flex gap-3">

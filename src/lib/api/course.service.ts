@@ -9,6 +9,7 @@ import type {
   CoursesPageResult,
   PaginatedCourses,
 } from "@/lib/api/course.types";
+import { resolveLessonType } from "@/lib/lesson-media";
 
 const BASE = "/course";
 
@@ -125,8 +126,10 @@ function toModules(curriculum: CourseModuleApiRecord[] | undefined): Module[] {
           id: String(lesson.id ?? `${moduleIndex}-${lessonIndex}`),
           title: lesson.title?.trim() || "Untitled lesson",
           duration: lesson.duration?.trim() || "",
+          lessonType: resolveLessonType(lesson),
           vimeoId: lesson.vimeoId?.trim() || "",
           videoUrl: lesson.videoUrl?.trim() || "",
+          linkUrl: lesson.linkUrl?.trim() || "",
           free: lesson.free === true,
         })),
     }));

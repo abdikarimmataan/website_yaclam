@@ -1,4 +1,5 @@
 import type { CourseLessonFormRow, CourseModule } from "@/lib/instructor/course-types";
+import { isValidExternalLessonUrl, resolveLessonType } from "@/lib/lesson-media";
 import { sanitizeCurriculumForApi } from "@/lib/instructor/course-form";
 
 export type LessonVideoTarget = {
@@ -15,6 +16,13 @@ export type CurriculumSavePayload = {
 
 function lessonHasVideo(lesson: CourseLessonFormRow): boolean {
   return Boolean(String(lesson.videoUrl ?? "").trim() || lesson.pendingVideoFile);
+}
+
+function lessonHasContent(lesson: CourseLessonFormRow): boolean {
+  if (resolveLessonType(lesson) === "link") {
+    return isValidExternalLessonUrl(String(lesson.linkUrl ?? ""));
+  }
+  return lessonHasVideo(lesson);
 }
 
 export type CurriculumValidationResult = {
@@ -52,11 +60,15 @@ export function validateCurriculumForm(curriculum: CourseModule[]): CurriculumVa
         toastMessages.push(`"${modTitle}" › ${lessonTitle}: lesson title is required.`);
       }
 
-      if (!lessonHasVideo(lesson as CourseLessonFormRow)) {
-        errors[`module-${moduleIndex}-lesson-${lessonIndex}-video`] =
-          "Lesson video is required. Upload a video or remove this lesson.";
+      if (!lessonHasContent(lesson as CourseLessonFormRow)) {
+        const isLink = resolveLessonType(lesson as CourseLessonFormRow) === "link";
+        errors[`module-${moduleIndex}-lesson-${lessonIndex}-video`] = isLink
+          ? "Lesson link is required. Enter a valid URL or remove this lesson."
+          : "Lesson video is required. Upload a video or remove this lesson.";
         toastMessages.push(
-          `"${modTitle}" › "${lessonTitle}": video is required. Upload a video or remove this lesson.`
+          isLink
+            ? `"${modTitle}" › "${lessonTitle}": link is required. Enter a valid URL or remove this lesson.`
+            : `"${modTitle}" › "${lessonTitle}": video is required. Upload a video or remove this lesson.`
         );
       }
     });

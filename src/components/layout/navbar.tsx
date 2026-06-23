@@ -6,8 +6,10 @@ import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "./theme-toggle";
+import { SiteLogo } from "./site-logo";
 import { useAuthSession } from "@/components/auth/use-auth-session";
 import { redirectPathForRole } from "@/lib/auth/session";
+import type { SiteSettings } from "@/lib/api/settings.types";
 
 const links = [
   { href: "/courses", label: "Courses" },
@@ -17,7 +19,7 @@ const links = [
   { href: "/about", label: "About" },
 ];
 
-export function Navbar() {
+export function Navbar({ settings }: { settings?: SiteSettings | null }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const { session, isLoggedIn } = useAuthSession();
@@ -26,10 +28,7 @@ export function Navbar() {
   return (
     <nav className="sticky top-0 z-50 border-b border-line bg-white/90 backdrop-blur-md">
       <div className="container flex h-[72px] items-center justify-between gap-6">
-        <Link href="/" className="flex items-center gap-2.5 text-[22px] font-extrabold tracking-tight text-navy">
-          <span className="ar grid h-9 w-9 place-items-center rounded-[11px] bg-gradient-to-br from-navy to-royal text-[20px] text-gold">ي</span>
-          <span>Yaclam<span className="text-gold">.</span></span>
-        </Link>
+        <SiteLogo settings={settings} />
 
         <ul className="hidden items-center gap-8 lg:flex">
           {links.map((l) => {

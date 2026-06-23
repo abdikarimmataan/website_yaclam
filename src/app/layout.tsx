@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, Fraunces, Amiri } from "next/font/google";
 import "./globals.css";
-import { Navbar } from "@/components/layout/navbar";
+import { NavbarLoader } from "@/components/layout/navbar-loader";
 import { FooterLoader } from "@/components/layout/footer-loader";
+import { TokenExpiryWatcher } from "@/components/auth/token-expiry-watcher";
 import { AppToaster } from "@/components/shared/app-toaster";
 
 const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "700", "800"], variable: "--font-jakarta", display: "swap" });
@@ -37,7 +38,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <AppToaster />
-        <Navbar />
+        <TokenExpiryWatcher />
+        <NavbarLoader />
         <main>{children}</main>
         <FooterLoader />
       </body>
