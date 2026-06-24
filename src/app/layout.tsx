@@ -5,25 +5,40 @@ import { NavbarLoader } from "@/components/layout/navbar-loader";
 import { FooterLoader } from "@/components/layout/footer-loader";
 import { TokenExpiryWatcher } from "@/components/auth/token-expiry-watcher";
 import { AppToaster } from "@/components/shared/app-toaster";
+import { getSiteSettings } from "@/lib/api/settings.service";
+import { uploadUrl } from "@/lib/api/cms";
 
 const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "700", "800"], variable: "--font-jakarta", display: "swap" });
 const fraunces = Fraunces({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--font-fraunces", display: "swap" });
 const amiri = Amiri({ subsets: ["arabic"], weight: ["400", "700"], variable: "--font-amiri", display: "swap" });
 
-export const metadata: Metadata = {
-  title: {
-    default: "Yaclam (يعلم) — Learn Without Limits",
-    template: "%s · Yaclam",
-  },
-  description:
-    "Yaclam is the leading Somali-language e-learning platform. Master practical skills, earn certificates, discover scholarships and advance your career through expert-led Somali-language education.",
-  keywords: ["Somali courses", "e-learning Somali", "scholarships", "data analytics Somali", "Yaclam"],
-  openGraph: {
-    title: "Yaclam (يعلم) — Learn Without Limits",
-    description: "Somali-language courses, scholarships and career roadmaps.",
-    type: "website",
-  },
-};
+const DEFAULT_TITLE = "Yaclam (يعلم) — Learn Without Limits";
+const DEFAULT_DESCRIPTION =
+  "Yaclam is the leading Somali-language e-learning platform. Master practical skills, earn certificates, discover scholarships and advance your career through expert-led Somali-language education.";
+const DEFAULT_KEYWORDS = ["Somali courses", "e-learning Somali", "scholarships", "data analytics Somali", "Yaclam"];
+
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSiteSettings();
+  const title = settings?.seo?.title?.trim() || DEFAULT_TITLE;
+  const description = settings?.seo?.description?.trim() || DEFAULT_DESCRIPTION;
+  const keywords = settings?.seo?.keywords?.length ? settings.seo.keywords : DEFAULT_KEYWORDS;
+  const faviconUrl = uploadUrl(settings?.favicon);
+
+  return {
+    title: {
+      default: title,
+      template: "%s · Yaclam",
+    },
+    description,
+    keywords,
+    openGraph: {
+      title,
+      description: "Somali-language courses, scholarships and career roadmaps.",
+      type: "website",
+    },
+    ...(faviconUrl ? { icons: { icon: faviconUrl } } : {}),
+  };
+}
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
