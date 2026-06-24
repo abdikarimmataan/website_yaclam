@@ -5,19 +5,7 @@ import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import type { HomeButton, HomeConfig } from "@/lib/api/home.types";
 import { cmsUrl, parseBoldSegments } from "@/lib/api/cms";
-import {
-  DEFAULT_HERO_PRIMARY,
-  DEFAULT_HERO_SECONDARY,
-  DEFAULT_HERO_STATS,
-} from "@/lib/api/home.defaults";
-
-const FALLBACK_COPY = {
-  heroVerseArabic: "قُلْ هَلْ يَسْتَوِي الَّذِينَ يَعْلَمُونَ وَالَّذِينَ لَا يَعْلَمُونَ",
-  heroVerseTranslation: "Are those who know equal to those who do not know?",
-  heroTitle: "Learn Skills. Build Careers. Create Opportunities.",
-  heroSubtitle:
-    "Master practical skills, earn certificates, discover scholarships, and advance your career through expert-led Somali-language education.",
-};
+import { heroFromConfig } from "@/lib/api/home.defaults";
 
 function HeroCta({ btn, className }: { btn: HomeButton; className: string }) {
   if (btn.isVisible === false || !btn.label) return null;
@@ -49,17 +37,18 @@ function HeroTitle({ title }: { title: string }) {
 }
 
 export function Hero({ config }: { config?: HomeConfig | null }) {
-  const fromApi = config != null;
-  const verseAr = config?.heroVerseArabic ?? FALLBACK_COPY.heroVerseArabic;
-  const verseEn = config?.heroVerseTranslation ?? FALLBACK_COPY.heroVerseTranslation;
-  const title = config?.heroTitle ?? FALLBACK_COPY.heroTitle;
-  const subtitle = config?.heroSubtitle ?? FALLBACK_COPY.heroSubtitle;
-  const primary = fromApi ? config.heroPrimaryButton : DEFAULT_HERO_PRIMARY;
-  const secondary = fromApi ? config.heroSecondaryButton : DEFAULT_HERO_SECONDARY;
-  const showStats = config?.statsIsVisible !== false;
-  const stats = (fromApi ? config.stats : DEFAULT_HERO_STATS)?.filter((s) => s.isVisible !== false) ?? [];
-  const learnerText = config?.heroLearnerCountText;
-  const badge = config?.heroBadgeText;
+  const {
+    verseAr,
+    verseEn,
+    title,
+    subtitle,
+    primary,
+    secondary,
+    showStats,
+    stats,
+    learnerText,
+    badge,
+  } = heroFromConfig(config ?? null);
 
   return (
     <header className="hero-bg relative overflow-hidden text-white">

@@ -22,7 +22,8 @@ export async function getAllHome(
 export async function getHomeConfig(): Promise<HomeConfig | null> {
   try {
     const res = await getAllHome({ page: 1, pageSize: 1 });
-    return res.data?.[0] ?? null;
+    const row = Array.isArray(res?.data) ? res.data[0] : undefined;
+    return row ?? null;
   } catch {
     return null;
   }
