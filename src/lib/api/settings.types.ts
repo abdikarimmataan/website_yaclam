@@ -16,6 +16,12 @@ export type SiteSettings = {
   siteName?: string;
   siteNameArabic?: string;
   siteTagline?: string;
+  favicon?: string;
+  seo?: {
+    title?: string;
+    description?: string;
+    keywords?: string[];
+  };
   logo?: {
     isVisible?: boolean;
     text?: SiteLogoText;
