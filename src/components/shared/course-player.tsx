@@ -7,6 +7,7 @@ import {
   FileText,
 } from "lucide-react";
 import type { Course, CourseResource, Module } from "@/lib/types";
+import { ExternalVideoPlayer } from "@/components/shared/external-video-player";
 import { VimeoPlayer } from "@/components/shared/vimeo-player";
 import { uploadUrl } from "@/lib/api/cms";
 import { resolveLessonType } from "@/lib/lesson-media";
@@ -85,25 +86,7 @@ export function CoursePlayer({
       <main className="order-2 lg:order-1">
         <div className="bg-navy-deep px-4 py-4 sm:px-8 sm:py-6">
           {isLinkLesson && linkUrl ? (
-            <div
-              className="relative w-full overflow-hidden rounded-2xl bg-black"
-              style={{ aspectRatio: "16 / 9" }}
-            >
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 px-4 text-center">
-                <Link2 size={40} className="text-gold" />
-                <p className="max-w-md text-[14px] text-white/80">
-                  This lesson opens an external video in a new browser tab.
-                </p>
-                <a
-                  href={linkUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn-gold"
-                >
-                  Open Link
-                </a>
-              </div>
-            </div>
+            <ExternalVideoPlayer url={linkUrl} title={active.title} />
           ) : vimeoId ? (
             <VimeoPlayer vimeoId={vimeoId} title={active.title} />
           ) : videoSrc && !videoFailed ? (
