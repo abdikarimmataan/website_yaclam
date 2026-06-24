@@ -21,6 +21,8 @@ import { firstParagraph } from "@/lib/utils";
 import { ScholarshipFlag } from "@/components/shared/scholarship-flag";
 import { Icon } from "@/lib/icon-map";
 
+export const dynamic = "force-dynamic";
+
 type FieldByCourse = {
   _id: string;
   id?: string;
