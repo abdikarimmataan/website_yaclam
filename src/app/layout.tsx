@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans, Fraunces, Amiri } from "next/font/google";
 import "./globals.css";
 import { NavbarLoader } from "@/components/layout/navbar-loader";
 import { FooterLoader } from "@/components/layout/footer-loader";
+import { WhatsAppLoader } from "@/components/layout/whatsapp-loader";
 import { TokenExpiryWatcher } from "@/components/auth/token-expiry-watcher";
 import { AppToaster } from "@/components/shared/app-toaster";
 import { getSiteSettings } from "@/lib/api/settings.service";
@@ -57,6 +58,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <NavbarLoader />
         <main>{children}</main>
         <FooterLoader />
+        <WhatsAppLoader />
       </body>
     </html>
   );
