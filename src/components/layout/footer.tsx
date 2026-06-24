@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { Facebook, Youtube, Instagram, Twitter, Linkedin } from "lucide-react";
 import { SiteLogo } from "@/components/layout/site-logo";
+import { WhatsAppIcon } from "@/components/shared/whatsapp-icon";
 import { cmsUrl } from "@/lib/api/cms";
 import type { FooterViewModel } from "@/lib/api/footer.defaults";
 import type { SiteSettings } from "@/lib/api/settings.types";
+import { toWhatsAppUrl } from "@/lib/whatsapp.utils";
 
 const SOCIAL_KEYS = [
   { key: "facebook" as const, Icon: Facebook, label: "Facebook" },
@@ -11,6 +13,7 @@ const SOCIAL_KEYS = [
   { key: "linkedin" as const, Icon: Linkedin, label: "LinkedIn" },
   { key: "youtube" as const, Icon: Youtube, label: "YouTube" },
   { key: "instagram" as const, Icon: Instagram, label: "Instagram" },
+  { key: "whatsapp" as const, Icon: WhatsAppIcon, label: "WhatsApp", isWhatsApp: true },
 ];
 
 export function Footer({
@@ -43,8 +46,9 @@ export function Footer({
             ) : null}
             <p className="max-w-xs text-[14.5px] leading-7">{data.description}</p>
             <div className="mt-4 flex gap-3">
-              {SOCIAL_KEYS.map(({ key, Icon, label }) => {
-                const href = data.socials[key]?.trim();
+              {SOCIAL_KEYS.map(({ key, Icon, label, isWhatsApp }) => {
+                const raw = data.socials[key]?.trim();
+                const href = isWhatsApp ? toWhatsAppUrl(raw) : raw;
                 if (!href) return null;
                 return (
                   <a

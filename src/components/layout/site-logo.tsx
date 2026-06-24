@@ -16,8 +16,8 @@ function resolveText(
   text?: SiteLogoText | null,
   fallbackText?: SiteLogoText | null
 ): SiteLogoText | null {
-  if (text && text.isVisible !== false && (text.name || text.mark)) return text;
-  if (fallbackText && fallbackText.isVisible !== false && (fallbackText.name || fallbackText.mark)) {
+  if (text && text.isVisible !== false && text.name) return text;
+  if (fallbackText && fallbackText.isVisible !== false && fallbackText.name) {
     return fallbackText;
   }
   return null;
@@ -43,39 +43,40 @@ export function SiteLogo({
       ? "text-[22px] font-extrabold text-white"
       : "text-[22px] font-extrabold tracking-tight text-navy";
 
-  const markClasses =
-    variant === "footer"
-      ? "ar grid h-9 w-9 place-items-center rounded-[11px] bg-gradient-to-br from-royal to-navy text-[20px] text-gold"
-      : "ar grid h-9 w-9 place-items-center rounded-[11px] bg-gradient-to-br from-navy to-royal text-[20px] text-gold";
+  const hasPicture = !!(showPicture && pictureSrc);
+  const hasText = !!resolvedText;
 
-  if (showPicture && pictureSrc) {
+  if (hasPicture || hasText) {
     return (
-      <Link href="/" className={cn("flex items-center", className)}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={pictureSrc}
-          alt={picture?.alt?.trim() || resolvedText?.name || "Yaclam"}
-          className={cn("h-9 w-auto max-w-[200px] object-contain", imageClassName)}
-        />
-      </Link>
-    );
-  }
-
-  if (resolvedText) {
-    return (
-      <Link href="/" className={cn("flex items-center gap-2.5", textClasses, className)}>
-        <span className={markClasses}>{resolvedText.mark || "ي"}</span>
-        <span>
-          {resolvedText.name || "Yaclam"}
-          <span className="text-gold">{resolvedText.highlight || "."}</span>
-        </span>
+      <Link
+        href="/"
+        className={cn(
+          "flex items-center",
+          hasText && "gap-2.5",
+          hasText && textClasses,
+          className
+        )}
+      >
+        {hasPicture && (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img
+            src={pictureSrc}
+            alt={picture?.alt?.trim() || resolvedText?.name || "Yaclam"}
+            className={cn("h-9 w-auto max-w-[200px] object-contain", imageClassName)}
+          />
+        )}
+        {hasText && (
+          <span>
+            {resolvedText.name || "Yaclam"}
+            <span className="text-gold">{resolvedText.highlight || "."}</span>
+          </span>
+        )}
       </Link>
     );
   }
 
   return (
     <Link href="/" className={cn("flex items-center gap-2.5", textClasses, className)}>
-      <span className={markClasses}>ي</span>
       <span>
         Yaclam<span className="text-gold">.</span>
       </span>

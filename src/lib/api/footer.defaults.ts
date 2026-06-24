@@ -11,6 +11,7 @@ const DEFAULT_SOCIALS: FooterSocials = {
   linkedin: "",
   youtube: "",
   instagram: "",
+  whatsapp: "",
 };
 
 const DEFAULT_COLUMNS: FooterColumn[] = [

@@ -28,6 +28,7 @@ export interface FooterSocials {
   linkedin?: string;
   youtube?: string;
   instagram?: string;
+  whatsapp?: string;
 }
 
 export interface FooterContent {
