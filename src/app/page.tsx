@@ -13,9 +13,10 @@ import { getHomeRoadmaps } from "@/lib/api/roadmap.service";
 import { getHomeScholarships } from "@/lib/api/scholarship.service";
 import { getHomePractitioners } from "@/lib/api/practitioner.service";
 import { getHomeTestimonials } from "@/lib/api/testimonial.service";
-import { getHomeLatestCourses } from "@/lib/api/course.service";
+import { getHomeSectionCourses } from "@/lib/api/course.service";
+import { getHomeCourseCategories } from "@/lib/api/course-category.service";
 import { getCoursesDisplayStats } from "@/lib/api/course-display-stats";
-import { FeaturedCoursesCarousel } from "@/components/home/featured-courses-carousel";
+import { FeaturedCoursesWithCategories } from "@/components/home/featured-courses-with-categories";
 import { sortBySortOrder } from "@/lib/api/sort-order";
 import { firstParagraph } from "@/lib/utils";
 import { ScholarshipFlag } from "@/components/shared/scholarship-flag";
@@ -61,10 +62,11 @@ export default async function Home() {
   const s = sectionsFromConfig(homeSections);
   const featuredCardsPerPage = s.featured.cardNumberVisible;
 
-  const [fields, featuredCoursesList, whyYaclamCards, homeRoadmaps, homeScholarships, homePractitioners, homeTestimonials] =
+  const [fields, featuredCoursesList, courseCategories, whyYaclamCards, homeRoadmaps, homeScholarships, homePractitioners, homeTestimonials] =
     await Promise.all([
     getFieldsByCourse(),
-    getHomeLatestCourses(Math.max(featuredCardsPerPage * 10, 12)),
+    getHomeSectionCourses(),
+    getHomeCourseCategories(),
     getWhyYaclamCards(),
     getHomeRoadmaps(),
     getHomeScholarships(),
@@ -121,7 +123,8 @@ export default async function Home() {
                 </Link>
               ) : null}
             </div>
-            <FeaturedCoursesCarousel
+            <FeaturedCoursesWithCategories
+              categories={courseCategories}
               courses={featuredCoursesList}
               cardsPerPage={featuredCardsPerPage}
               stats={featuredStats}

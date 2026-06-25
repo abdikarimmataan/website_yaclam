@@ -45,6 +45,7 @@ export type CourseApiRecord = {
   description?: string;
   shortDescription?: string;
   category?: string;
+  courseCategoryId?: string | { id?: string; _id?: string; name?: string; sortOrder?: number } | null;
   fieldId?: string | CourseFieldRef | null;
   level?: string;
   language?: string;

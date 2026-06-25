@@ -22,6 +22,7 @@ const DEFAULT_COLUMNS: FooterColumn[] = [
       { label: "All Courses", url: "/courses", isVisible: true },
       { label: "Career Roadmaps", url: "/roadmaps", isVisible: true },
       { label: "Scholarships", url: "/scholarships", isVisible: true },
+      { label: "Universities", url: "/universities", isVisible: true },
       { label: "Blog", url: "/blog", isVisible: true },
     ],
   },

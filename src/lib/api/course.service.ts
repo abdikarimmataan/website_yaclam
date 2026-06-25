@@ -10,6 +10,7 @@ import type {
   PaginatedCourses,
 } from "@/lib/api/course.types";
 import { resolveLessonType } from "@/lib/lesson-media";
+import { resolveCourseCategoryId } from "@/lib/api/course-category.service";
 
 const BASE = "/course";
 
@@ -143,6 +144,7 @@ export function toCourse(record: CourseApiRecord): Course {
   const lessons = Number(record.lessonCount ?? record.details?.lessonCount) || 0;
   const isFree = record.isFree === true;
   const { category, categoryIcon, fieldId } = resolveFieldMeta(record);
+  const courseCategoryId = resolveCourseCategoryId(record.courseCategoryId);
 
   return {
     id,
@@ -150,6 +152,7 @@ export function toCourse(record: CourseApiRecord): Course {
     title: record.title?.trim() || "Course",
     category,
     fieldId,
+    courseCategoryId,
     categoryIcon,
     instructor,
     instructorRole: record.instructor?.role?.trim() || undefined,
@@ -246,6 +249,17 @@ export async function getHomeLatestCourses(
     return sortCoursesByLatest(visibleCourses(res.data))
       .slice(0, Math.max(0, limit))
       .map(toCourse);
+  } catch {
+    return [];
+  }
+}
+
+/** All visible published courses for home category tabs (no global limit). */
+export async function getHomeSectionCourses(): Promise<Course[]> {
+  try {
+    const res = await getAllCourses({ page: 1, pageSize: 500 });
+    if (!Array.isArray(res.data)) return [];
+    return sortCoursesByLatest(visibleCourses(res.data)).map(toCourse);
   } catch {
     return [];
   }

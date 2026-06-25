@@ -24,6 +24,7 @@ export interface Course {
   title: string;
   category: string;
   fieldId?: string;
+  courseCategoryId?: string;
   categoryIcon?: string;
   instructor: string;
   instructorRole?: string;
