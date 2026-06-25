@@ -14,6 +14,10 @@ export interface SectionButton {
 }
 
 export interface FeaturedCoursesSection extends SectionText {
+  /** Grid rows on the home page featured courses carousel. */
+  gridRows?: number;
+  /** Grid columns per row (each column gets equal width, e.g. 3 → 1/3 each). */
+  gridColumns?: number;
   viewAllButton?: SectionButton;
 }
 

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronRight, Clock, Calendar, User } from "lucide-react";
+import { BlogArticleContent } from "@/components/blog/blog-article-content";
 import { BlogCard } from "@/components/shared/blog-card";
 import { uploadUrl } from "@/lib/api/cms";
 import {
@@ -80,11 +81,15 @@ export default async function BlogDetail({ params }: { params: Promise<{ slug: s
           <p className="mb-8 border-l-4 border-gold pl-5 text-[19px] font-medium leading-relaxed text-ink-2">
             {post.excerpt}
           </p>
-          {post.body.map((para, i) => (
-            <p key={i} className="mb-5 text-[17px] leading-[1.8] text-ink-2">
-              {para}
-            </p>
-          ))}
+          {post.contentHtml ? (
+            <BlogArticleContent html={post.contentHtml} />
+          ) : (
+            post.body.map((para, i) => (
+              <p key={i} className="mb-5 text-[17px] leading-[1.8] text-ink-2">
+                {para}
+              </p>
+            ))
+          )}
         </div>
       </article>
 
