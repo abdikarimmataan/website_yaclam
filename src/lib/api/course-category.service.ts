@@ -43,7 +43,7 @@ export async function getHomeCourseCategories(): Promise<CourseCategory[]> {
     const res = await api.get<PaginatedCourseCategories | { message?: string }>(
       `${BASE}/getAll?page=1&pageSize=100&isVisible=true`
     );
-    if (!Array.isArray(res.data)) return [];
+    if (!("data" in res) || !Array.isArray(res.data)) return [];
     return sortBySortOrder(visibleCategories(res.data))
       .map(toCourseCategory)
       .filter((c): c is CourseCategory => c != null);
