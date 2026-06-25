@@ -5,6 +5,14 @@ import type { Course } from "@/lib/types";
 import { CourseCard } from "@/components/shared/course-card";
 import type { CourseRatingsSummary } from "@/lib/api/course-rating.service";
 import type { CourseVideoHoursSummary } from "@/lib/api/course-video-hours.service";
+import {
+  DEFAULT_FEATURED_GRID_COLUMNS,
+  DEFAULT_FEATURED_GRID_ROWS,
+  featuredCardsPerPage,
+  featuredGridColsClass,
+  featuredGridMinHeight,
+  featuredGridRowsClass,
+} from "@/lib/featured-courses-grid";
 import { cn } from "@/lib/utils";
 
 type DisplayStats = {
@@ -13,20 +21,18 @@ type DisplayStats = {
   videoHours: Record<string, CourseVideoHoursSummary>;
 };
 
-const CARDS_PER_ROW = 3;
-const ROWS_PER_PAGE = 2;
-const CARDS_PER_PAGE = CARDS_PER_ROW * ROWS_PER_PAGE;
-
 export function FeaturedCoursesCarousel({
   courses,
-  cardsPerPage: _cardsPerPage,
+  gridRows = DEFAULT_FEATURED_GRID_ROWS,
+  gridColumns = DEFAULT_FEATURED_GRID_COLUMNS,
   stats,
 }: {
   courses: Course[];
-  cardsPerPage: number;
+  gridRows?: number;
+  gridColumns?: number;
   stats: DisplayStats;
 }) {
-  const perPage = CARDS_PER_PAGE;
+  const perPage = featuredCardsPerPage(gridRows, gridColumns);
   const totalPages = Math.max(1, Math.ceil(courses.length / perPage));
   const [page, setPage] = useState(0);
 
@@ -36,28 +42,31 @@ export function FeaturedCoursesCarousel({
 
   const safePage = Math.min(page, totalPages - 1);
   const pageStart = safePage * perPage;
+  const pageCourses = courses.slice(pageStart, pageStart + perPage);
+  const activeRows = Math.max(
+    1,
+    Math.min(gridRows, Math.ceil(pageCourses.length / gridColumns))
+  );
+  const isFullPage = pageCourses.length >= perPage;
   const showNav = courses.length > perPage;
 
   return (
     <div>
-      <div className="grid grid-cols-1 items-stretch gap-6 sm:grid-cols-2 lg:min-h-[744px] lg:grid-cols-3 lg:grid-rows-2">
-        {Array.from({ length: perPage }, (_, i) => {
-          const c = courses[pageStart + i];
-          if (!c) {
-            return (
-              <div
-                key={`featured-slot-${safePage}-${i}`}
-                className="card-base pointer-events-none invisible hidden min-h-[360px] lg:block"
-                aria-hidden
-              />
-            );
-          }
-
+      <div
+        className={cn(
+          "grid grid-cols-1 gap-6 sm:grid-cols-2",
+          isFullPage ? "items-stretch" : "items-start",
+          featuredGridColsClass(gridColumns),
+          featuredGridRowsClass(activeRows),
+          isFullPage && featuredGridMinHeight(activeRows)
+        )}
+      >
+        {pageCourses.map((c) => {
           const id = String(c.id);
           const ratingStats = stats.ratings[id];
           const videoStats = stats.videoHours[id];
           return (
-            <div key={c.id} className="h-full [&>a]:h-full">
+            <div key={c.id} className={isFullPage ? "h-full [&>a]:h-full" : undefined}>
               <CourseCard
                 c={c}
                 initialRating={ratingStats?.rating ?? 0}

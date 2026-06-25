@@ -18,7 +18,8 @@ type DisplayStats = {
 type FeaturedCoursesWithCategoriesProps = {
   categories: CourseCategory[];
   courses: Course[];
-  cardsPerPage: number;
+  gridRows: number;
+  gridColumns: number;
   stats: DisplayStats;
 };
 
@@ -30,7 +31,8 @@ function matchesCategory(course: Course, categoryId: string): boolean {
 export function FeaturedCoursesWithCategories({
   categories,
   courses,
-  cardsPerPage,
+  gridRows,
+  gridColumns,
   stats,
 }: FeaturedCoursesWithCategoriesProps) {
   const defaultCategoryId = useMemo(() => resolveDefaultCategoryId(categories), [categories]);
@@ -51,7 +53,8 @@ export function FeaturedCoursesWithCategories({
     return (
       <FeaturedCoursesCarousel
         courses={courses}
-        cardsPerPage={cardsPerPage}
+        gridRows={gridRows}
+        gridColumns={gridColumns}
         stats={stats}
       />
     );
@@ -89,7 +92,8 @@ export function FeaturedCoursesWithCategories({
         <FeaturedCoursesCarousel
           key={effectiveCategoryId}
           courses={filteredCourses}
-          cardsPerPage={cardsPerPage}
+          gridRows={gridRows}
+          gridColumns={gridColumns}
           stats={stats}
         />
       )}

@@ -194,3 +194,131 @@
     width: auto;
   }
 }
+
+/* Rich blog article body (CKEditor HTML) */
+.blog-article-content > *:first-child {
+  margin-top: 0;
+}
+.blog-article-content > *:last-child {
+  margin-bottom: 0;
+}
+.blog-article-content p {
+  margin-bottom: 1.25rem;
+}
+.blog-article-content h2,
+.blog-article-content h3,
+.blog-article-content h4 {
+  color: #0d1b4b;
+  font-weight: 600;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+}
+.blog-article-content h2 {
+  font-size: 1.75rem;
+}
+.blog-article-content h3 {
+  font-size: 1.375rem;
+}
+.blog-article-content h4 {
+  font-size: 1.125rem;
+}
+.blog-article-content a {
+  color: #0d1b4b;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.blog-article-content a:hover {
+  color: #c9a84c;
+}
+.blog-article-content ul,
+.blog-article-content ol {
+  margin: 0 0 1.25rem 1.5rem;
+}
+.blog-article-content ul {
+  list-style: disc;
+}
+.blog-article-content ol {
+  list-style: decimal;
+}
+.blog-article-content li {
+  margin-bottom: 0.35rem;
+}
+.blog-article-content blockquote {
+  border-left: 4px solid #c9a84c;
+  color: #4a5568;
+  font-style: italic;
+  margin: 1.5rem 0;
+  padding-left: 1.25rem;
+}
+.blog-article-content img {
+  border-radius: 0.75rem;
+  display: block;
+  height: auto;
+  margin: 1.5rem auto;
+  max-width: 100%;
+}
+.blog-article-content figure {
+  margin: 1.5rem 0;
+}
+.blog-article-content figcaption {
+  color: #6b7280;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+  text-align: center;
+}
+.blog-article-content table {
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+  width: 100%;
+}
+.blog-article-content th,
+.blog-article-content td {
+  border: 1px solid #e2e8f0;
+  padding: 0.65rem 0.85rem;
+  text-align: left;
+  vertical-align: top;
+}
+.blog-article-content th {
+  background: #f8fafc;
+  color: #0d1b4b;
+  font-weight: 600;
+}
+.blog-article-content pre {
+  background: #0d1b4b;
+  border-radius: 0.75rem;
+  color: #f8fafc;
+  margin: 1.5rem 0;
+  overflow-x: auto;
+  padding: 1rem 1.25rem;
+}
+.blog-article-content code {
+  background: #f1f5f9;
+  border-radius: 0.25rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.9em;
+  padding: 0.1rem 0.35rem;
+}
+.blog-article-content pre code {
+  background: transparent;
+  padding: 0;
+}
+.blog-article-content hr {
+  border: none;
+  border-top: 1px solid #e2e8f0;
+  margin: 2rem 0;
+}
+.blog-article-content .media {
+  margin: 1.5rem 0;
+}
+.blog-article-content .media iframe {
+  aspect-ratio: 16 / 9;
+  border: none;
+  border-radius: 0.75rem;
+  display: block;
+  max-width: 100%;
+  width: 100%;
+}
+.blog-article-content mark {
+  background: #fef3c7;
+  padding: 0 0.15rem;
+}

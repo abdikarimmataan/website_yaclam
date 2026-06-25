@@ -60,7 +60,6 @@ export default async function Home() {
     getHomeSectionsConfig(),
   ]);
   const s = sectionsFromConfig(homeSections);
-  const featuredCardsPerPage = s.featured.cardNumberVisible;
 
   const [fields, featuredCoursesList, courseCategories, whyYaclamCards, homeRoadmaps, homeScholarships, homePractitioners, homeTestimonials] =
     await Promise.all([
@@ -126,7 +125,8 @@ export default async function Home() {
             <FeaturedCoursesWithCategories
               categories={courseCategories}
               courses={featuredCoursesList}
-              cardsPerPage={featuredCardsPerPage}
+              gridRows={s.featured.gridRows}
+              gridColumns={s.featured.gridColumns}
               stats={featuredStats}
             />
           </div>

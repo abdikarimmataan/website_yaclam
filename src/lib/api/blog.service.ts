@@ -16,6 +16,10 @@ const CATEGORY_BASE = "/blog_category";
 export const BLOG_PAGE_SIZE = 6;
 export const BLOG_RELATED_COUNT = 3;
 
+function isHtmlContent(value: string): boolean {
+  return /<[a-z][\s\S]*>/i.test(value.trim());
+}
+
 export type BlogPostListParams = {
   page?: number;
   pageSize?: number;
@@ -59,15 +63,19 @@ function resolveCategory(record: BlogPostApiRecord) {
 export function toBlogPost(record: BlogPostApiRecord): BlogPost {
   const { name: category, id: categoryId, color: categoryColor } = resolveCategory(record);
   const title = record.title?.trim() || "Article";
+  const rawContent = record.content?.trim() || "";
+  const htmlContent = isHtmlContent(rawContent) ? rawContent : "";
   const body =
-    Array.isArray(record.body) && record.body.length
-      ? record.body.map((p) => p.trim()).filter(Boolean)
-      : record.content?.trim()
-        ? record.content
-            .split(/\n\n+/)
-            .map((p) => p.trim())
-            .filter(Boolean)
-        : [];
+    htmlContent
+      ? []
+      : Array.isArray(record.body) && record.body.length
+        ? record.body.map((p) => p.trim()).filter(Boolean)
+        : rawContent
+          ? rawContent
+              .split(/\n\n+/)
+              .map((p) => p.trim())
+              .filter(Boolean)
+          : [];
   const dateRaw = record.publishedDate || record.publishedAt || record.created_at;
 
   return {
@@ -79,11 +87,21 @@ export function toBlogPost(record: BlogPostApiRecord): BlogPost {
     author: record.authorName?.trim() || record.author?.trim() || "Yaclam",
     date: dateRaw ? String(dateRaw) : "",
     readTime: Number(record.readTime) > 0 ? Number(record.readTime) : 1,
-    excerpt: record.excerpt?.trim() || body[0]?.slice(0, 200) || "",
+    excerpt: record.excerpt?.trim() || body[0]?.slice(0, 200) || stripHtmlExcerpt(htmlContent),
     body,
+    contentHtml: htmlContent || undefined,
     color: record.color?.trim() || categoryColor || "#1F3A93",
     coverImage: record.coverImage?.trim() || "",
   };
+}
+
+function stripHtmlExcerpt(html: string): string {
+  return html
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 200);
 }
 
 export function toBlogCategory(record: BlogCategoryApiRecord): BlogCategory {

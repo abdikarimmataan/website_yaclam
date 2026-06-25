@@ -7,6 +7,12 @@ import type {
   SectionButton,
   SectionText,
 } from "@/lib/api/home-sections.types";
+import {
+  clampGridDimension,
+  DEFAULT_FEATURED_GRID_COLUMNS,
+  DEFAULT_FEATURED_GRID_ROWS,
+  featuredCardsPerPage,
+} from "@/lib/featured-courses-grid";
 
 type SectionFallback = { eyebrow: string; title: string; subtitle: string };
 
@@ -95,8 +101,13 @@ function sectionButton(btn: SectionButton | undefined, fallback: SectionButton) 
 
 function featuredFromSections(section: FeaturedCoursesSection | undefined) {
   const base = sectionText(section, SECTION_FALLBACKS.featured);
+  const gridRows = clampGridDimension(section?.gridRows, DEFAULT_FEATURED_GRID_ROWS);
+  const gridColumns = clampGridDimension(section?.gridColumns, DEFAULT_FEATURED_GRID_COLUMNS);
   return {
     ...base,
+    gridRows,
+    gridColumns,
+    cardsPerPage: featuredCardsPerPage(gridRows, gridColumns),
     viewAll: sectionButton(section?.viewAllButton, BUTTON_FALLBACKS.featuredViewAll),
   };
 }

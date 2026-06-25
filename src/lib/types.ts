@@ -118,6 +118,8 @@ export interface BlogPost {
   readTime: number;
   excerpt: string;
   body: string[];
+  /** HTML content when the article uses rich formatting. */
+  contentHtml?: string;
   color: string;
   coverImage?: string;
 }
