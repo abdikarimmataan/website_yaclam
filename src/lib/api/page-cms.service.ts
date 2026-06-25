@@ -6,6 +6,7 @@ const CMS_PATHS: Record<PageCmsKey, string> = {
   course: "/course_cms",
   roadmap: "/roadmap_cms",
   scholarship: "/scholarship_cms",
+  university: "/university_cms",
   blog: "/blog_cms",
   about: "/about_cms",
   contact: "/contact_cms",

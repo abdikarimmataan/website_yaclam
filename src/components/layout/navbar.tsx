@@ -14,6 +14,7 @@ import type { SiteSettings } from "@/lib/api/settings.types";
 const links = [
   { href: "/courses", label: "Courses" },
   { href: "/scholarships", label: "Scholarships" },
+  { href: "/universities", label: "Universities" },
   { href: "/roadmaps", label: "Career Roadmaps" },
   { href: "/blog", label: "Blog" },
   { href: "/about", label: "About" },

@@ -14,4 +14,4 @@ export interface PageCmsView {
   emptyStateText: string;
 }
 
-export type PageCmsKey = "course" | "roadmap" | "scholarship" | "blog" | "about" | "contact";
+export type PageCmsKey = "course" | "roadmap" | "scholarship" | "university" | "blog" | "about" | "contact";

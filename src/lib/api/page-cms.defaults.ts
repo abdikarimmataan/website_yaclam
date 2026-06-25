@@ -20,6 +20,12 @@ export const PAGE_CMS_FALLBACKS: Record<PageCmsKey, PageCmsFallback> = {
       "Funded study opportunities worldwide — eligibility, benefits and deadlines, explained for Somali applicants.",
     emptyStateText: "No scholarships found.",
   },
+  university: {
+    title: "Universities",
+    subtitle:
+      "Find universities and the courses they offer — Bachelor, Master, PhD, research and internships — with the scholarships that fund them.",
+    emptyStateText: "No universities found.",
+  },
   blog: {
     title: "Yaclam Blog",
     subtitle:
