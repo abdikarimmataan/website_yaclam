@@ -102,7 +102,39 @@ export function CoursesExplorer({
     [courses, q, cat, price, picked]
   );
 
-  const visibleFields = fields.filter((f) => f.courseCount > 0 || cat === f.id);
+  const fieldsWithCourses = useMemo(() => {
+    const countByFieldId = new Map<string, number>();
+    for (const course of courses) {
+      const fieldId = course.fieldId ? String(course.fieldId).trim() : "";
+      if (fieldId) countByFieldId.set(fieldId, (countByFieldId.get(fieldId) ?? 0) + 1);
+    }
+
+    const seen = new Set<string>();
+    const result: CourseFieldOption[] = [];
+
+    for (const field of fields) {
+      const courseCount = countByFieldId.get(field.id) ?? field.courseCount;
+      if (courseCount > 0 || cat === field.id) {
+        result.push({ ...field, courseCount });
+        seen.add(field.id);
+      }
+    }
+
+    for (const [fieldId, courseCount] of countByFieldId) {
+      if (courseCount > 0 && !seen.has(fieldId)) {
+        const course = courses.find((c) => String(c.fieldId) === fieldId);
+        result.push({
+          id: fieldId,
+          name: course?.category ?? "Field",
+          slug: slugify(course?.category ?? fieldId),
+          icon: course?.categoryIcon,
+          courseCount,
+        });
+      }
+    }
+
+    return result;
+  }, [courses, fields, cat]);
 
   return (
     <div className="grid items-start gap-9 md:grid-cols-[260px_1fr]">
@@ -160,7 +192,7 @@ export function CoursesExplorer({
             />{" "}
             All fields
           </label>
-          {visibleFields.map((field) => (
+          {fieldsWithCourses.map((field) => (
             <label
               key={field.id}
               className="flex cursor-pointer items-center gap-2.5 py-1.5 text-[14px] text-ink-2 hover:text-navy"
@@ -202,7 +234,7 @@ export function CoursesExplorer({
           >
             All
           </button>
-          {visibleFields.map((field) => (
+          {fieldsWithCourses.map((field) => (
             <button
               key={field.id}
               type="button"

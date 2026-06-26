@@ -26,8 +26,8 @@ export async function getCourseFields(): Promise<CourseFieldOption[]> {
       auth: false,
     });
     if (!Array.isArray(data)) return [];
-    const options = data
-      .filter((row) => row.isVisible !== false)
+    const visible = sortBySortOrder(data.filter((row) => row.isVisible !== false));
+    return visible
       .map((row) => {
         const id = String(row.id ?? row._id ?? "").trim();
         const name = String(row.name ?? "").trim();
@@ -40,10 +40,7 @@ export async function getCourseFields(): Promise<CourseFieldOption[]> {
           courseCount: Number(row.courseCount) || 0,
         };
       })
-      .filter((row) => row != null) as CourseFieldOption[];
-    return sortBySortOrder(
-      options as Array<CourseFieldOption & { sortOrder?: number }>
-    ) as CourseFieldOption[];
+      .filter((row): row is CourseFieldOption => row != null);
   } catch {
     return [];
   }
