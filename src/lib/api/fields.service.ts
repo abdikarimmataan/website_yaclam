@@ -27,20 +27,20 @@ export async function getCourseFields(): Promise<CourseFieldOption[]> {
     });
     if (!Array.isArray(data)) return [];
     const visible = sortBySortOrder(data.filter((row) => row.isVisible !== false));
-    return visible
-      .map((row) => {
-        const id = String(row.id ?? row._id ?? "").trim();
-        const name = String(row.name ?? "").trim();
-        if (!id || !name) return null;
-        return {
+    return visible.flatMap((row) => {
+      const id = String(row.id ?? row._id ?? "").trim();
+      const name = String(row.name ?? "").trim();
+      if (!id || !name) return [];
+      return [
+        {
           id,
           name,
           slug: slugify(name),
           icon: row.icon?.trim() || undefined,
           courseCount: Number(row.courseCount) || 0,
-        };
-      })
-      .filter((row): row is CourseFieldOption => row != null);
+        },
+      ];
+    });
   } catch {
     return [];
   }
